@@ -2524,6 +2524,15 @@ class $MindfulSettingsTableTable extends MindfulSettingsTable
       requiredDuringInsert: false,
       defaultValue: const Constant(""));
   @override
+  late final GeneratedColumnWithTypeConverter<InterventionArm, int>
+      interventionArm = GeneratedColumn<int>(
+              'intervention_arm', aliasedName, false,
+              type: DriftSqlType.int,
+              requiredDuringInsert: false,
+              defaultValue: const Constant(3))
+          .withConverter<InterventionArm>(
+              $MindfulSettingsTableTable.$converterinterventionArm);
+  @override
   List<GeneratedColumn> get $columns => [
         id,
         themeMode,
@@ -2537,7 +2546,8 @@ class $MindfulSettingsTableTable extends MindfulSettingsTable
         leftEmergencyPasses,
         lastEmergencyUsed,
         isOnboardingDone,
-        appVersion
+        appVersion,
+        interventionArm
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2648,6 +2658,9 @@ class $MindfulSettingsTableTable extends MindfulSettingsTable
           DriftSqlType.bool, data['${effectivePrefix}is_onboarding_done'])!,
       appVersion: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}app_version'])!,
+      interventionArm: $MindfulSettingsTableTable.$converterinterventionArm
+          .fromSql(attachedDatabase.typeMapping.read(
+              DriftSqlType.int, data['${effectivePrefix}intervention_arm'])!),
     );
   }
 
@@ -2660,6 +2673,8 @@ class $MindfulSettingsTableTable extends MindfulSettingsTable
       const EnumIndexConverter<AppThemeMode>(AppThemeMode.values);
   static JsonTypeConverter2<DefaultHomeTab, int, int> $converterdefaultHomeTab =
       const EnumIndexConverter<DefaultHomeTab>(DefaultHomeTab.values);
+  static TypeConverter<InterventionArm, int> $converterinterventionArm =
+      const InterventionArmConverter();
 }
 
 class MindfulSettings extends DataClass implements Insertable<MindfulSettings> {
@@ -2702,6 +2717,9 @@ class MindfulSettings extends DataClass implements Insertable<MindfulSettings> {
   /// The currently installed version of Mindful.
   /// Mainly used to show changelogs screen.
   final String appVersion;
+
+  /// Intervention arm assignment (blank|mindfulness|friction|identity)
+  final InterventionArm interventionArm;
   const MindfulSettings(
       {required this.id,
       required this.themeMode,
@@ -2715,7 +2733,8 @@ class MindfulSettings extends DataClass implements Insertable<MindfulSettings> {
       required this.leftEmergencyPasses,
       required this.lastEmergencyUsed,
       required this.isOnboardingDone,
-      required this.appVersion});
+      required this.appVersion,
+      required this.interventionArm});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -2739,6 +2758,11 @@ class MindfulSettings extends DataClass implements Insertable<MindfulSettings> {
     map['last_emergency_used'] = Variable<DateTime>(lastEmergencyUsed);
     map['is_onboarding_done'] = Variable<bool>(isOnboardingDone);
     map['app_version'] = Variable<String>(appVersion);
+    {
+      map['intervention_arm'] = Variable<int>($MindfulSettingsTableTable
+          .$converterinterventionArm
+          .toSql(interventionArm));
+    }
     return map;
   }
 
@@ -2757,6 +2781,7 @@ class MindfulSettings extends DataClass implements Insertable<MindfulSettings> {
       lastEmergencyUsed: Value(lastEmergencyUsed),
       isOnboardingDone: Value(isOnboardingDone),
       appVersion: Value(appVersion),
+      interventionArm: Value(interventionArm),
     );
   }
 
@@ -2781,6 +2806,8 @@ class MindfulSettings extends DataClass implements Insertable<MindfulSettings> {
           serializer.fromJson<DateTime>(json['lastEmergencyUsed']),
       isOnboardingDone: serializer.fromJson<bool>(json['isOnboardingDone']),
       appVersion: serializer.fromJson<String>(json['appVersion']),
+      interventionArm:
+          serializer.fromJson<InterventionArm>(json['interventionArm']),
     );
   }
   @override
@@ -2803,6 +2830,7 @@ class MindfulSettings extends DataClass implements Insertable<MindfulSettings> {
       'lastEmergencyUsed': serializer.toJson<DateTime>(lastEmergencyUsed),
       'isOnboardingDone': serializer.toJson<bool>(isOnboardingDone),
       'appVersion': serializer.toJson<String>(appVersion),
+      'interventionArm': serializer.toJson<InterventionArm>(interventionArm),
     };
   }
 
@@ -2819,7 +2847,8 @@ class MindfulSettings extends DataClass implements Insertable<MindfulSettings> {
           int? leftEmergencyPasses,
           DateTime? lastEmergencyUsed,
           bool? isOnboardingDone,
-          String? appVersion}) =>
+          String? appVersion,
+          InterventionArm? interventionArm}) =>
       MindfulSettings(
         id: id ?? this.id,
         themeMode: themeMode ?? this.themeMode,
@@ -2834,6 +2863,7 @@ class MindfulSettings extends DataClass implements Insertable<MindfulSettings> {
         lastEmergencyUsed: lastEmergencyUsed ?? this.lastEmergencyUsed,
         isOnboardingDone: isOnboardingDone ?? this.isOnboardingDone,
         appVersion: appVersion ?? this.appVersion,
+        interventionArm: interventionArm ?? this.interventionArm,
       );
   MindfulSettings copyWithCompanion(MindfulSettingsTableCompanion data) {
     return MindfulSettings(
@@ -2867,6 +2897,9 @@ class MindfulSettings extends DataClass implements Insertable<MindfulSettings> {
           : this.isOnboardingDone,
       appVersion:
           data.appVersion.present ? data.appVersion.value : this.appVersion,
+      interventionArm: data.interventionArm.present
+          ? data.interventionArm.value
+          : this.interventionArm,
     );
   }
 
@@ -2885,7 +2918,8 @@ class MindfulSettings extends DataClass implements Insertable<MindfulSettings> {
           ..write('leftEmergencyPasses: $leftEmergencyPasses, ')
           ..write('lastEmergencyUsed: $lastEmergencyUsed, ')
           ..write('isOnboardingDone: $isOnboardingDone, ')
-          ..write('appVersion: $appVersion')
+          ..write('appVersion: $appVersion, ')
+          ..write('interventionArm: $interventionArm')
           ..write(')'))
         .toString();
   }
@@ -2904,7 +2938,8 @@ class MindfulSettings extends DataClass implements Insertable<MindfulSettings> {
       leftEmergencyPasses,
       lastEmergencyUsed,
       isOnboardingDone,
-      appVersion);
+      appVersion,
+      interventionArm);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2921,7 +2956,8 @@ class MindfulSettings extends DataClass implements Insertable<MindfulSettings> {
           other.leftEmergencyPasses == this.leftEmergencyPasses &&
           other.lastEmergencyUsed == this.lastEmergencyUsed &&
           other.isOnboardingDone == this.isOnboardingDone &&
-          other.appVersion == this.appVersion);
+          other.appVersion == this.appVersion &&
+          other.interventionArm == this.interventionArm);
 }
 
 class MindfulSettingsTableCompanion extends UpdateCompanion<MindfulSettings> {
@@ -2938,6 +2974,7 @@ class MindfulSettingsTableCompanion extends UpdateCompanion<MindfulSettings> {
   final Value<DateTime> lastEmergencyUsed;
   final Value<bool> isOnboardingDone;
   final Value<String> appVersion;
+  final Value<InterventionArm> interventionArm;
   const MindfulSettingsTableCompanion({
     this.id = const Value.absent(),
     this.themeMode = const Value.absent(),
@@ -2952,6 +2989,7 @@ class MindfulSettingsTableCompanion extends UpdateCompanion<MindfulSettings> {
     this.lastEmergencyUsed = const Value.absent(),
     this.isOnboardingDone = const Value.absent(),
     this.appVersion = const Value.absent(),
+    this.interventionArm = const Value.absent(),
   });
   MindfulSettingsTableCompanion.insert({
     this.id = const Value.absent(),
@@ -2967,6 +3005,7 @@ class MindfulSettingsTableCompanion extends UpdateCompanion<MindfulSettings> {
     this.lastEmergencyUsed = const Value.absent(),
     this.isOnboardingDone = const Value.absent(),
     this.appVersion = const Value.absent(),
+    this.interventionArm = const Value.absent(),
   });
   static Insertable<MindfulSettings> custom({
     Expression<int>? id,
@@ -2982,6 +3021,7 @@ class MindfulSettingsTableCompanion extends UpdateCompanion<MindfulSettings> {
     Expression<DateTime>? lastEmergencyUsed,
     Expression<bool>? isOnboardingDone,
     Expression<String>? appVersion,
+    Expression<int>? interventionArm,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2998,6 +3038,7 @@ class MindfulSettingsTableCompanion extends UpdateCompanion<MindfulSettings> {
       if (lastEmergencyUsed != null) 'last_emergency_used': lastEmergencyUsed,
       if (isOnboardingDone != null) 'is_onboarding_done': isOnboardingDone,
       if (appVersion != null) 'app_version': appVersion,
+      if (interventionArm != null) 'intervention_arm': interventionArm,
     });
   }
 
@@ -3014,7 +3055,8 @@ class MindfulSettingsTableCompanion extends UpdateCompanion<MindfulSettings> {
       Value<int>? leftEmergencyPasses,
       Value<DateTime>? lastEmergencyUsed,
       Value<bool>? isOnboardingDone,
-      Value<String>? appVersion}) {
+      Value<String>? appVersion,
+      Value<InterventionArm>? interventionArm}) {
     return MindfulSettingsTableCompanion(
       id: id ?? this.id,
       themeMode: themeMode ?? this.themeMode,
@@ -3029,6 +3071,7 @@ class MindfulSettingsTableCompanion extends UpdateCompanion<MindfulSettings> {
       lastEmergencyUsed: lastEmergencyUsed ?? this.lastEmergencyUsed,
       isOnboardingDone: isOnboardingDone ?? this.isOnboardingDone,
       appVersion: appVersion ?? this.appVersion,
+      interventionArm: interventionArm ?? this.interventionArm,
     );
   }
 
@@ -3078,6 +3121,11 @@ class MindfulSettingsTableCompanion extends UpdateCompanion<MindfulSettings> {
     if (appVersion.present) {
       map['app_version'] = Variable<String>(appVersion.value);
     }
+    if (interventionArm.present) {
+      map['intervention_arm'] = Variable<int>($MindfulSettingsTableTable
+          .$converterinterventionArm
+          .toSql(interventionArm.value));
+    }
     return map;
   }
 
@@ -3096,7 +3144,8 @@ class MindfulSettingsTableCompanion extends UpdateCompanion<MindfulSettings> {
           ..write('leftEmergencyPasses: $leftEmergencyPasses, ')
           ..write('lastEmergencyUsed: $lastEmergencyUsed, ')
           ..write('isOnboardingDone: $isOnboardingDone, ')
-          ..write('appVersion: $appVersion')
+          ..write('appVersion: $appVersion, ')
+          ..write('interventionArm: $interventionArm')
           ..write(')'))
         .toString();
   }
@@ -5983,6 +6032,1049 @@ class NotificationsTableCompanion extends UpdateCompanion<Notification> {
   }
 }
 
+class $SessionTableTable extends SessionTable
+    with TableInfo<$SessionTableTable, Session> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SessionTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _dateMeta = const VerificationMeta('date');
+  @override
+  late final GeneratedColumn<DateTime> date = GeneratedColumn<DateTime>(
+      'date', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: Constant(DateTime(0)));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: Constant(DateTime.now()));
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: Constant(DateTime.now()));
+  @override
+  List<GeneratedColumn> get $columns => [id, date, createdAt, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'session_table';
+  @override
+  VerificationContext validateIntegrity(Insertable<Session> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('date')) {
+      context.handle(
+          _dateMeta, date.isAcceptableOrUnknown(data['date']!, _dateMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Session map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Session(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      date: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}date'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+    );
+  }
+
+  @override
+  $SessionTableTable createAlias(String alias) {
+    return $SessionTableTable(attachedDatabase, alias);
+  }
+}
+
+class Session extends DataClass implements Insertable<Session> {
+  /// Unique ID for session (auto-increment)
+  final int id;
+
+  /// The day this session belongs to (date only, time truncated)
+  final DateTime date;
+
+  /// Timestamp when session was created
+  final DateTime createdAt;
+
+  /// Timestamp when session was last updated
+  final DateTime updatedAt;
+  const Session(
+      {required this.id,
+      required this.date,
+      required this.createdAt,
+      required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['date'] = Variable<DateTime>(date);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  SessionTableCompanion toCompanion(bool nullToAbsent) {
+    return SessionTableCompanion(
+      id: Value(id),
+      date: Value(date),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory Session.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Session(
+      id: serializer.fromJson<int>(json['id']),
+      date: serializer.fromJson<DateTime>(json['date']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'date': serializer.toJson<DateTime>(date),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  Session copyWith(
+          {int? id,
+          DateTime? date,
+          DateTime? createdAt,
+          DateTime? updatedAt}) =>
+      Session(
+        id: id ?? this.id,
+        date: date ?? this.date,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  Session copyWithCompanion(SessionTableCompanion data) {
+    return Session(
+      id: data.id.present ? data.id.value : this.id,
+      date: data.date.present ? data.date.value : this.date,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Session(')
+          ..write('id: $id, ')
+          ..write('date: $date, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, date, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Session &&
+          other.id == this.id &&
+          other.date == this.date &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class SessionTableCompanion extends UpdateCompanion<Session> {
+  final Value<int> id;
+  final Value<DateTime> date;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  const SessionTableCompanion({
+    this.id = const Value.absent(),
+    this.date = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  SessionTableCompanion.insert({
+    this.id = const Value.absent(),
+    this.date = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  static Insertable<Session> custom({
+    Expression<int>? id,
+    Expression<DateTime>? date,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (date != null) 'date': date,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  SessionTableCompanion copyWith(
+      {Value<int>? id,
+      Value<DateTime>? date,
+      Value<DateTime>? createdAt,
+      Value<DateTime>? updatedAt}) {
+    return SessionTableCompanion(
+      id: id ?? this.id,
+      date: date ?? this.date,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (date.present) {
+      map['date'] = Variable<DateTime>(date.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SessionTableCompanion(')
+          ..write('id: $id, ')
+          ..write('date: $date, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $StudyConfigTableTable extends StudyConfigTable
+    with TableInfo<$StudyConfigTableTable, StudyConfig> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $StudyConfigTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1));
+  static const VerificationMeta _parametersMeta =
+      const VerificationMeta('parameters');
+  @override
+  late final GeneratedColumn<String> parameters = GeneratedColumn<String>(
+      'parameters', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant("{}"));
+  @override
+  List<GeneratedColumn> get $columns => [id, parameters];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'study_config_table';
+  @override
+  VerificationContext validateIntegrity(Insertable<StudyConfig> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('parameters')) {
+      context.handle(
+          _parametersMeta,
+          parameters.isAcceptableOrUnknown(
+              data['parameters']!, _parametersMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  StudyConfig map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return StudyConfig(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      parameters: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}parameters'])!,
+    );
+  }
+
+  @override
+  $StudyConfigTableTable createAlias(String alias) {
+    return $StudyConfigTableTable(attachedDatabase, alias);
+  }
+}
+
+class StudyConfig extends DataClass implements Insertable<StudyConfig> {
+  /// Unique ID for study config (should always be singleton: ID = 1)
+  final int id;
+
+  /// JSON string containing runtime parameters
+  /// Expected structure: {"flaggedPackages": [...], "retriggerMinutes": number}
+  final String parameters;
+  const StudyConfig({required this.id, required this.parameters});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['parameters'] = Variable<String>(parameters);
+    return map;
+  }
+
+  StudyConfigTableCompanion toCompanion(bool nullToAbsent) {
+    return StudyConfigTableCompanion(
+      id: Value(id),
+      parameters: Value(parameters),
+    );
+  }
+
+  factory StudyConfig.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return StudyConfig(
+      id: serializer.fromJson<int>(json['id']),
+      parameters: serializer.fromJson<String>(json['parameters']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'parameters': serializer.toJson<String>(parameters),
+    };
+  }
+
+  StudyConfig copyWith({int? id, String? parameters}) => StudyConfig(
+        id: id ?? this.id,
+        parameters: parameters ?? this.parameters,
+      );
+  StudyConfig copyWithCompanion(StudyConfigTableCompanion data) {
+    return StudyConfig(
+      id: data.id.present ? data.id.value : this.id,
+      parameters:
+          data.parameters.present ? data.parameters.value : this.parameters,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StudyConfig(')
+          ..write('id: $id, ')
+          ..write('parameters: $parameters')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, parameters);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is StudyConfig &&
+          other.id == this.id &&
+          other.parameters == this.parameters);
+}
+
+class StudyConfigTableCompanion extends UpdateCompanion<StudyConfig> {
+  final Value<int> id;
+  final Value<String> parameters;
+  const StudyConfigTableCompanion({
+    this.id = const Value.absent(),
+    this.parameters = const Value.absent(),
+  });
+  StudyConfigTableCompanion.insert({
+    this.id = const Value.absent(),
+    this.parameters = const Value.absent(),
+  });
+  static Insertable<StudyConfig> custom({
+    Expression<int>? id,
+    Expression<String>? parameters,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (parameters != null) 'parameters': parameters,
+    });
+  }
+
+  StudyConfigTableCompanion copyWith(
+      {Value<int>? id, Value<String>? parameters}) {
+    return StudyConfigTableCompanion(
+      id: id ?? this.id,
+      parameters: parameters ?? this.parameters,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (parameters.present) {
+      map['parameters'] = Variable<String>(parameters.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StudyConfigTableCompanion(')
+          ..write('id: $id, ')
+          ..write('parameters: $parameters')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PromptDeliveryLogTableTable extends PromptDeliveryLogTable
+    with TableInfo<$PromptDeliveryLogTableTable, PromptDeliveryLog> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PromptDeliveryLogTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _sessionIdFkMeta =
+      const VerificationMeta('sessionIdFk');
+  @override
+  late final GeneratedColumn<int> sessionIdFk = GeneratedColumn<int>(
+      'session_id_fk', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _templateIdFkMeta =
+      const VerificationMeta('templateIdFk');
+  @override
+  late final GeneratedColumn<int> templateIdFk = GeneratedColumn<int>(
+      'template_id_fk', aliasedName, true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(null));
+  static const VerificationMeta _outcomeMeta =
+      const VerificationMeta('outcome');
+  @override
+  late final GeneratedColumn<String> outcome = GeneratedColumn<String>(
+      'outcome', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant("abandoned"));
+  static const VerificationMeta _responseContentMeta =
+      const VerificationMeta('responseContent');
+  @override
+  late final GeneratedColumn<String> responseContent = GeneratedColumn<String>(
+      'response_content', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(""));
+  static const VerificationMeta _triggerTypeMeta =
+      const VerificationMeta('triggerType');
+  @override
+  late final GeneratedColumn<String> triggerType = GeneratedColumn<String>(
+      'trigger_type', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant("launch"));
+  static const VerificationMeta _appPackageMeta =
+      const VerificationMeta('appPackage');
+  @override
+  late final GeneratedColumn<String> appPackage = GeneratedColumn<String>(
+      'app_package', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(""));
+  static const VerificationMeta _secondsSpentMeta =
+      const VerificationMeta('secondsSpent');
+  @override
+  late final GeneratedColumn<int> secondsSpent = GeneratedColumn<int>(
+      'seconds_spent', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _startedAtMeta =
+      const VerificationMeta('startedAt');
+  @override
+  late final GeneratedColumn<DateTime> startedAt = GeneratedColumn<DateTime>(
+      'started_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: Constant(DateTime.now()));
+  static const VerificationMeta _completedAtMeta =
+      const VerificationMeta('completedAt');
+  @override
+  late final GeneratedColumn<DateTime> completedAt = GeneratedColumn<DateTime>(
+      'completed_at', aliasedName, true,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(null));
+  static const VerificationMeta _successMeta =
+      const VerificationMeta('success');
+  @override
+  late final GeneratedColumn<bool> success = GeneratedColumn<bool>(
+      'success', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("success" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        sessionIdFk,
+        templateIdFk,
+        outcome,
+        responseContent,
+        triggerType,
+        appPackage,
+        secondsSpent,
+        startedAt,
+        completedAt,
+        success
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'prompt_delivery_log_table';
+  @override
+  VerificationContext validateIntegrity(Insertable<PromptDeliveryLog> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('session_id_fk')) {
+      context.handle(
+          _sessionIdFkMeta,
+          sessionIdFk.isAcceptableOrUnknown(
+              data['session_id_fk']!, _sessionIdFkMeta));
+    } else if (isInserting) {
+      context.missing(_sessionIdFkMeta);
+    }
+    if (data.containsKey('template_id_fk')) {
+      context.handle(
+          _templateIdFkMeta,
+          templateIdFk.isAcceptableOrUnknown(
+              data['template_id_fk']!, _templateIdFkMeta));
+    }
+    if (data.containsKey('outcome')) {
+      context.handle(_outcomeMeta,
+          outcome.isAcceptableOrUnknown(data['outcome']!, _outcomeMeta));
+    }
+    if (data.containsKey('response_content')) {
+      context.handle(
+          _responseContentMeta,
+          responseContent.isAcceptableOrUnknown(
+              data['response_content']!, _responseContentMeta));
+    }
+    if (data.containsKey('trigger_type')) {
+      context.handle(
+          _triggerTypeMeta,
+          triggerType.isAcceptableOrUnknown(
+              data['trigger_type']!, _triggerTypeMeta));
+    }
+    if (data.containsKey('app_package')) {
+      context.handle(
+          _appPackageMeta,
+          appPackage.isAcceptableOrUnknown(
+              data['app_package']!, _appPackageMeta));
+    }
+    if (data.containsKey('seconds_spent')) {
+      context.handle(
+          _secondsSpentMeta,
+          secondsSpent.isAcceptableOrUnknown(
+              data['seconds_spent']!, _secondsSpentMeta));
+    }
+    if (data.containsKey('started_at')) {
+      context.handle(_startedAtMeta,
+          startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta));
+    }
+    if (data.containsKey('completed_at')) {
+      context.handle(
+          _completedAtMeta,
+          completedAt.isAcceptableOrUnknown(
+              data['completed_at']!, _completedAtMeta));
+    }
+    if (data.containsKey('success')) {
+      context.handle(_successMeta,
+          success.isAcceptableOrUnknown(data['success']!, _successMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PromptDeliveryLog map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PromptDeliveryLog(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      sessionIdFk: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}session_id_fk'])!,
+      templateIdFk: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}template_id_fk']),
+      outcome: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}outcome'])!,
+      responseContent: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}response_content'])!,
+      triggerType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}trigger_type'])!,
+      appPackage: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}app_package'])!,
+      secondsSpent: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}seconds_spent'])!,
+      startedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}started_at'])!,
+      completedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}completed_at']),
+      success: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}success'])!,
+    );
+  }
+
+  @override
+  $PromptDeliveryLogTableTable createAlias(String alias) {
+    return $PromptDeliveryLogTableTable(attachedDatabase, alias);
+  }
+}
+
+class PromptDeliveryLog extends DataClass
+    implements Insertable<PromptDeliveryLog> {
+  /// Unique ID for each prompt delivery log entry (auto-increment)
+  final int id;
+
+  /// Foreign key to Session table
+  final int sessionIdFk;
+
+  /// Foreign key to template (nullable for placeholders)
+  final int? templateIdFk;
+
+  /// Outcome: 'completed' or 'abandoned'
+  final String outcome;
+
+  /// Response content (empty string for placeholders)
+  final String responseContent;
+
+  /// Trigger type: 'launch' or 'retrigger'
+  final String triggerType;
+
+  /// The Android package name that triggered this intervention
+  final String appPackage;
+
+  /// Number of seconds spent in the intervention
+  final int secondsSpent;
+
+  /// Timestamp when intervention started (overlay became visible)
+  final DateTime startedAt;
+
+  /// Timestamp when intervention completed (overlay dismissed)
+  final DateTime? completedAt;
+
+  /// Success flag: true if intervention completed normally
+  final bool success;
+  const PromptDeliveryLog(
+      {required this.id,
+      required this.sessionIdFk,
+      this.templateIdFk,
+      required this.outcome,
+      required this.responseContent,
+      required this.triggerType,
+      required this.appPackage,
+      required this.secondsSpent,
+      required this.startedAt,
+      this.completedAt,
+      required this.success});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['session_id_fk'] = Variable<int>(sessionIdFk);
+    if (!nullToAbsent || templateIdFk != null) {
+      map['template_id_fk'] = Variable<int>(templateIdFk);
+    }
+    map['outcome'] = Variable<String>(outcome);
+    map['response_content'] = Variable<String>(responseContent);
+    map['trigger_type'] = Variable<String>(triggerType);
+    map['app_package'] = Variable<String>(appPackage);
+    map['seconds_spent'] = Variable<int>(secondsSpent);
+    map['started_at'] = Variable<DateTime>(startedAt);
+    if (!nullToAbsent || completedAt != null) {
+      map['completed_at'] = Variable<DateTime>(completedAt);
+    }
+    map['success'] = Variable<bool>(success);
+    return map;
+  }
+
+  PromptDeliveryLogTableCompanion toCompanion(bool nullToAbsent) {
+    return PromptDeliveryLogTableCompanion(
+      id: Value(id),
+      sessionIdFk: Value(sessionIdFk),
+      templateIdFk: templateIdFk == null && nullToAbsent
+          ? const Value.absent()
+          : Value(templateIdFk),
+      outcome: Value(outcome),
+      responseContent: Value(responseContent),
+      triggerType: Value(triggerType),
+      appPackage: Value(appPackage),
+      secondsSpent: Value(secondsSpent),
+      startedAt: Value(startedAt),
+      completedAt: completedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(completedAt),
+      success: Value(success),
+    );
+  }
+
+  factory PromptDeliveryLog.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PromptDeliveryLog(
+      id: serializer.fromJson<int>(json['id']),
+      sessionIdFk: serializer.fromJson<int>(json['sessionIdFk']),
+      templateIdFk: serializer.fromJson<int?>(json['templateIdFk']),
+      outcome: serializer.fromJson<String>(json['outcome']),
+      responseContent: serializer.fromJson<String>(json['responseContent']),
+      triggerType: serializer.fromJson<String>(json['triggerType']),
+      appPackage: serializer.fromJson<String>(json['appPackage']),
+      secondsSpent: serializer.fromJson<int>(json['secondsSpent']),
+      startedAt: serializer.fromJson<DateTime>(json['startedAt']),
+      completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
+      success: serializer.fromJson<bool>(json['success']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'sessionIdFk': serializer.toJson<int>(sessionIdFk),
+      'templateIdFk': serializer.toJson<int?>(templateIdFk),
+      'outcome': serializer.toJson<String>(outcome),
+      'responseContent': serializer.toJson<String>(responseContent),
+      'triggerType': serializer.toJson<String>(triggerType),
+      'appPackage': serializer.toJson<String>(appPackage),
+      'secondsSpent': serializer.toJson<int>(secondsSpent),
+      'startedAt': serializer.toJson<DateTime>(startedAt),
+      'completedAt': serializer.toJson<DateTime?>(completedAt),
+      'success': serializer.toJson<bool>(success),
+    };
+  }
+
+  PromptDeliveryLog copyWith(
+          {int? id,
+          int? sessionIdFk,
+          Value<int?> templateIdFk = const Value.absent(),
+          String? outcome,
+          String? responseContent,
+          String? triggerType,
+          String? appPackage,
+          int? secondsSpent,
+          DateTime? startedAt,
+          Value<DateTime?> completedAt = const Value.absent(),
+          bool? success}) =>
+      PromptDeliveryLog(
+        id: id ?? this.id,
+        sessionIdFk: sessionIdFk ?? this.sessionIdFk,
+        templateIdFk:
+            templateIdFk.present ? templateIdFk.value : this.templateIdFk,
+        outcome: outcome ?? this.outcome,
+        responseContent: responseContent ?? this.responseContent,
+        triggerType: triggerType ?? this.triggerType,
+        appPackage: appPackage ?? this.appPackage,
+        secondsSpent: secondsSpent ?? this.secondsSpent,
+        startedAt: startedAt ?? this.startedAt,
+        completedAt: completedAt.present ? completedAt.value : this.completedAt,
+        success: success ?? this.success,
+      );
+  PromptDeliveryLog copyWithCompanion(PromptDeliveryLogTableCompanion data) {
+    return PromptDeliveryLog(
+      id: data.id.present ? data.id.value : this.id,
+      sessionIdFk:
+          data.sessionIdFk.present ? data.sessionIdFk.value : this.sessionIdFk,
+      templateIdFk: data.templateIdFk.present
+          ? data.templateIdFk.value
+          : this.templateIdFk,
+      outcome: data.outcome.present ? data.outcome.value : this.outcome,
+      responseContent: data.responseContent.present
+          ? data.responseContent.value
+          : this.responseContent,
+      triggerType:
+          data.triggerType.present ? data.triggerType.value : this.triggerType,
+      appPackage:
+          data.appPackage.present ? data.appPackage.value : this.appPackage,
+      secondsSpent: data.secondsSpent.present
+          ? data.secondsSpent.value
+          : this.secondsSpent,
+      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
+      completedAt:
+          data.completedAt.present ? data.completedAt.value : this.completedAt,
+      success: data.success.present ? data.success.value : this.success,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PromptDeliveryLog(')
+          ..write('id: $id, ')
+          ..write('sessionIdFk: $sessionIdFk, ')
+          ..write('templateIdFk: $templateIdFk, ')
+          ..write('outcome: $outcome, ')
+          ..write('responseContent: $responseContent, ')
+          ..write('triggerType: $triggerType, ')
+          ..write('appPackage: $appPackage, ')
+          ..write('secondsSpent: $secondsSpent, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('success: $success')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      sessionIdFk,
+      templateIdFk,
+      outcome,
+      responseContent,
+      triggerType,
+      appPackage,
+      secondsSpent,
+      startedAt,
+      completedAt,
+      success);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PromptDeliveryLog &&
+          other.id == this.id &&
+          other.sessionIdFk == this.sessionIdFk &&
+          other.templateIdFk == this.templateIdFk &&
+          other.outcome == this.outcome &&
+          other.responseContent == this.responseContent &&
+          other.triggerType == this.triggerType &&
+          other.appPackage == this.appPackage &&
+          other.secondsSpent == this.secondsSpent &&
+          other.startedAt == this.startedAt &&
+          other.completedAt == this.completedAt &&
+          other.success == this.success);
+}
+
+class PromptDeliveryLogTableCompanion
+    extends UpdateCompanion<PromptDeliveryLog> {
+  final Value<int> id;
+  final Value<int> sessionIdFk;
+  final Value<int?> templateIdFk;
+  final Value<String> outcome;
+  final Value<String> responseContent;
+  final Value<String> triggerType;
+  final Value<String> appPackage;
+  final Value<int> secondsSpent;
+  final Value<DateTime> startedAt;
+  final Value<DateTime?> completedAt;
+  final Value<bool> success;
+  const PromptDeliveryLogTableCompanion({
+    this.id = const Value.absent(),
+    this.sessionIdFk = const Value.absent(),
+    this.templateIdFk = const Value.absent(),
+    this.outcome = const Value.absent(),
+    this.responseContent = const Value.absent(),
+    this.triggerType = const Value.absent(),
+    this.appPackage = const Value.absent(),
+    this.secondsSpent = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.completedAt = const Value.absent(),
+    this.success = const Value.absent(),
+  });
+  PromptDeliveryLogTableCompanion.insert({
+    this.id = const Value.absent(),
+    required int sessionIdFk,
+    this.templateIdFk = const Value.absent(),
+    this.outcome = const Value.absent(),
+    this.responseContent = const Value.absent(),
+    this.triggerType = const Value.absent(),
+    this.appPackage = const Value.absent(),
+    this.secondsSpent = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.completedAt = const Value.absent(),
+    this.success = const Value.absent(),
+  }) : sessionIdFk = Value(sessionIdFk);
+  static Insertable<PromptDeliveryLog> custom({
+    Expression<int>? id,
+    Expression<int>? sessionIdFk,
+    Expression<int>? templateIdFk,
+    Expression<String>? outcome,
+    Expression<String>? responseContent,
+    Expression<String>? triggerType,
+    Expression<String>? appPackage,
+    Expression<int>? secondsSpent,
+    Expression<DateTime>? startedAt,
+    Expression<DateTime>? completedAt,
+    Expression<bool>? success,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (sessionIdFk != null) 'session_id_fk': sessionIdFk,
+      if (templateIdFk != null) 'template_id_fk': templateIdFk,
+      if (outcome != null) 'outcome': outcome,
+      if (responseContent != null) 'response_content': responseContent,
+      if (triggerType != null) 'trigger_type': triggerType,
+      if (appPackage != null) 'app_package': appPackage,
+      if (secondsSpent != null) 'seconds_spent': secondsSpent,
+      if (startedAt != null) 'started_at': startedAt,
+      if (completedAt != null) 'completed_at': completedAt,
+      if (success != null) 'success': success,
+    });
+  }
+
+  PromptDeliveryLogTableCompanion copyWith(
+      {Value<int>? id,
+      Value<int>? sessionIdFk,
+      Value<int?>? templateIdFk,
+      Value<String>? outcome,
+      Value<String>? responseContent,
+      Value<String>? triggerType,
+      Value<String>? appPackage,
+      Value<int>? secondsSpent,
+      Value<DateTime>? startedAt,
+      Value<DateTime?>? completedAt,
+      Value<bool>? success}) {
+    return PromptDeliveryLogTableCompanion(
+      id: id ?? this.id,
+      sessionIdFk: sessionIdFk ?? this.sessionIdFk,
+      templateIdFk: templateIdFk ?? this.templateIdFk,
+      outcome: outcome ?? this.outcome,
+      responseContent: responseContent ?? this.responseContent,
+      triggerType: triggerType ?? this.triggerType,
+      appPackage: appPackage ?? this.appPackage,
+      secondsSpent: secondsSpent ?? this.secondsSpent,
+      startedAt: startedAt ?? this.startedAt,
+      completedAt: completedAt ?? this.completedAt,
+      success: success ?? this.success,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (sessionIdFk.present) {
+      map['session_id_fk'] = Variable<int>(sessionIdFk.value);
+    }
+    if (templateIdFk.present) {
+      map['template_id_fk'] = Variable<int>(templateIdFk.value);
+    }
+    if (outcome.present) {
+      map['outcome'] = Variable<String>(outcome.value);
+    }
+    if (responseContent.present) {
+      map['response_content'] = Variable<String>(responseContent.value);
+    }
+    if (triggerType.present) {
+      map['trigger_type'] = Variable<String>(triggerType.value);
+    }
+    if (appPackage.present) {
+      map['app_package'] = Variable<String>(appPackage.value);
+    }
+    if (secondsSpent.present) {
+      map['seconds_spent'] = Variable<int>(secondsSpent.value);
+    }
+    if (startedAt.present) {
+      map['started_at'] = Variable<DateTime>(startedAt.value);
+    }
+    if (completedAt.present) {
+      map['completed_at'] = Variable<DateTime>(completedAt.value);
+    }
+    if (success.present) {
+      map['success'] = Variable<bool>(success.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PromptDeliveryLogTableCompanion(')
+          ..write('id: $id, ')
+          ..write('sessionIdFk: $sessionIdFk, ')
+          ..write('templateIdFk: $templateIdFk, ')
+          ..write('outcome: $outcome, ')
+          ..write('responseContent: $responseContent, ')
+          ..write('triggerType: $triggerType, ')
+          ..write('appPackage: $appPackage, ')
+          ..write('secondsSpent: $secondsSpent, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('success: $success')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6010,6 +7102,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $NotificationSettingsTableTable(this);
   late final $NotificationsTableTable notificationsTable =
       $NotificationsTableTable(this);
+  late final $SessionTableTable sessionTable = $SessionTableTable(this);
+  late final $StudyConfigTableTable studyConfigTable =
+      $StudyConfigTableTable(this);
+  late final $PromptDeliveryLogTableTable promptDeliveryLogTable =
+      $PromptDeliveryLogTableTable(this);
   late final UniqueRecordsDao uniqueRecordsDao =
       UniqueRecordsDao(this as AppDatabase);
   late final DynamicRecordsDao dynamicRecordsDao =
@@ -6032,7 +7129,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         sharedUniqueDataTable,
         appUsageTable,
         notificationSettingsTable,
-        notificationsTable
+        notificationsTable,
+        sessionTable,
+        studyConfigTable,
+        promptDeliveryLogTable
       ];
 }
 
@@ -7246,6 +8346,7 @@ typedef $$MindfulSettingsTableTableCreateCompanionBuilder
   Value<DateTime> lastEmergencyUsed,
   Value<bool> isOnboardingDone,
   Value<String> appVersion,
+  Value<InterventionArm> interventionArm,
 });
 typedef $$MindfulSettingsTableTableUpdateCompanionBuilder
     = MindfulSettingsTableCompanion Function({
@@ -7262,6 +8363,7 @@ typedef $$MindfulSettingsTableTableUpdateCompanionBuilder
   Value<DateTime> lastEmergencyUsed,
   Value<bool> isOnboardingDone,
   Value<String> appVersion,
+  Value<InterventionArm> interventionArm,
 });
 
 class $$MindfulSettingsTableTableFilterComposer
@@ -7320,6 +8422,11 @@ class $$MindfulSettingsTableTableFilterComposer
 
   ColumnFilters<String> get appVersion => $composableBuilder(
       column: $table.appVersion, builder: (column) => ColumnFilters(column));
+
+  ColumnWithTypeConverterFilters<InterventionArm, InterventionArm, int>
+      get interventionArm => $composableBuilder(
+          column: $table.interventionArm,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
 }
 
 class $$MindfulSettingsTableTableOrderingComposer
@@ -7376,6 +8483,10 @@ class $$MindfulSettingsTableTableOrderingComposer
 
   ColumnOrderings<String> get appVersion => $composableBuilder(
       column: $table.appVersion, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get interventionArm => $composableBuilder(
+      column: $table.interventionArm,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$MindfulSettingsTableTableAnnotationComposer
@@ -7426,6 +8537,10 @@ class $$MindfulSettingsTableTableAnnotationComposer
 
   GeneratedColumn<String> get appVersion => $composableBuilder(
       column: $table.appVersion, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<InterventionArm, int> get interventionArm =>
+      $composableBuilder(
+          column: $table.interventionArm, builder: (column) => column);
 }
 
 class $$MindfulSettingsTableTableTableManager extends RootTableManager<
@@ -7470,6 +8585,7 @@ class $$MindfulSettingsTableTableTableManager extends RootTableManager<
             Value<DateTime> lastEmergencyUsed = const Value.absent(),
             Value<bool> isOnboardingDone = const Value.absent(),
             Value<String> appVersion = const Value.absent(),
+            Value<InterventionArm> interventionArm = const Value.absent(),
           }) =>
               MindfulSettingsTableCompanion(
             id: id,
@@ -7485,6 +8601,7 @@ class $$MindfulSettingsTableTableTableManager extends RootTableManager<
             lastEmergencyUsed: lastEmergencyUsed,
             isOnboardingDone: isOnboardingDone,
             appVersion: appVersion,
+            interventionArm: interventionArm,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -7500,6 +8617,7 @@ class $$MindfulSettingsTableTableTableManager extends RootTableManager<
             Value<DateTime> lastEmergencyUsed = const Value.absent(),
             Value<bool> isOnboardingDone = const Value.absent(),
             Value<String> appVersion = const Value.absent(),
+            Value<InterventionArm> interventionArm = const Value.absent(),
           }) =>
               MindfulSettingsTableCompanion.insert(
             id: id,
@@ -7515,6 +8633,7 @@ class $$MindfulSettingsTableTableTableManager extends RootTableManager<
             lastEmergencyUsed: lastEmergencyUsed,
             isOnboardingDone: isOnboardingDone,
             appVersion: appVersion,
+            interventionArm: interventionArm,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -8975,6 +10094,543 @@ typedef $$NotificationsTableTableProcessedTableManager = ProcessedTableManager<
     ),
     Notification,
     PrefetchHooks Function()>;
+typedef $$SessionTableTableCreateCompanionBuilder = SessionTableCompanion
+    Function({
+  Value<int> id,
+  Value<DateTime> date,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+});
+typedef $$SessionTableTableUpdateCompanionBuilder = SessionTableCompanion
+    Function({
+  Value<int> id,
+  Value<DateTime> date,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+});
+
+class $$SessionTableTableFilterComposer
+    extends Composer<_$AppDatabase, $SessionTableTable> {
+  $$SessionTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get date => $composableBuilder(
+      column: $table.date, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$SessionTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $SessionTableTable> {
+  $$SessionTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get date => $composableBuilder(
+      column: $table.date, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$SessionTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SessionTableTable> {
+  $$SessionTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get date =>
+      $composableBuilder(column: $table.date, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$SessionTableTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $SessionTableTable,
+    Session,
+    $$SessionTableTableFilterComposer,
+    $$SessionTableTableOrderingComposer,
+    $$SessionTableTableAnnotationComposer,
+    $$SessionTableTableCreateCompanionBuilder,
+    $$SessionTableTableUpdateCompanionBuilder,
+    (Session, BaseReferences<_$AppDatabase, $SessionTableTable, Session>),
+    Session,
+    PrefetchHooks Function()> {
+  $$SessionTableTableTableManager(_$AppDatabase db, $SessionTableTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SessionTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SessionTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SessionTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> date = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+          }) =>
+              SessionTableCompanion(
+            id: id,
+            date: date,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> date = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+          }) =>
+              SessionTableCompanion.insert(
+            id: id,
+            date: date,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$SessionTableTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $SessionTableTable,
+    Session,
+    $$SessionTableTableFilterComposer,
+    $$SessionTableTableOrderingComposer,
+    $$SessionTableTableAnnotationComposer,
+    $$SessionTableTableCreateCompanionBuilder,
+    $$SessionTableTableUpdateCompanionBuilder,
+    (Session, BaseReferences<_$AppDatabase, $SessionTableTable, Session>),
+    Session,
+    PrefetchHooks Function()>;
+typedef $$StudyConfigTableTableCreateCompanionBuilder
+    = StudyConfigTableCompanion Function({
+  Value<int> id,
+  Value<String> parameters,
+});
+typedef $$StudyConfigTableTableUpdateCompanionBuilder
+    = StudyConfigTableCompanion Function({
+  Value<int> id,
+  Value<String> parameters,
+});
+
+class $$StudyConfigTableTableFilterComposer
+    extends Composer<_$AppDatabase, $StudyConfigTableTable> {
+  $$StudyConfigTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get parameters => $composableBuilder(
+      column: $table.parameters, builder: (column) => ColumnFilters(column));
+}
+
+class $$StudyConfigTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $StudyConfigTableTable> {
+  $$StudyConfigTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get parameters => $composableBuilder(
+      column: $table.parameters, builder: (column) => ColumnOrderings(column));
+}
+
+class $$StudyConfigTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $StudyConfigTableTable> {
+  $$StudyConfigTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get parameters => $composableBuilder(
+      column: $table.parameters, builder: (column) => column);
+}
+
+class $$StudyConfigTableTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $StudyConfigTableTable,
+    StudyConfig,
+    $$StudyConfigTableTableFilterComposer,
+    $$StudyConfigTableTableOrderingComposer,
+    $$StudyConfigTableTableAnnotationComposer,
+    $$StudyConfigTableTableCreateCompanionBuilder,
+    $$StudyConfigTableTableUpdateCompanionBuilder,
+    (
+      StudyConfig,
+      BaseReferences<_$AppDatabase, $StudyConfigTableTable, StudyConfig>
+    ),
+    StudyConfig,
+    PrefetchHooks Function()> {
+  $$StudyConfigTableTableTableManager(
+      _$AppDatabase db, $StudyConfigTableTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$StudyConfigTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$StudyConfigTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$StudyConfigTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> parameters = const Value.absent(),
+          }) =>
+              StudyConfigTableCompanion(
+            id: id,
+            parameters: parameters,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> parameters = const Value.absent(),
+          }) =>
+              StudyConfigTableCompanion.insert(
+            id: id,
+            parameters: parameters,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$StudyConfigTableTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $StudyConfigTableTable,
+    StudyConfig,
+    $$StudyConfigTableTableFilterComposer,
+    $$StudyConfigTableTableOrderingComposer,
+    $$StudyConfigTableTableAnnotationComposer,
+    $$StudyConfigTableTableCreateCompanionBuilder,
+    $$StudyConfigTableTableUpdateCompanionBuilder,
+    (
+      StudyConfig,
+      BaseReferences<_$AppDatabase, $StudyConfigTableTable, StudyConfig>
+    ),
+    StudyConfig,
+    PrefetchHooks Function()>;
+typedef $$PromptDeliveryLogTableTableCreateCompanionBuilder
+    = PromptDeliveryLogTableCompanion Function({
+  Value<int> id,
+  required int sessionIdFk,
+  Value<int?> templateIdFk,
+  Value<String> outcome,
+  Value<String> responseContent,
+  Value<String> triggerType,
+  Value<String> appPackage,
+  Value<int> secondsSpent,
+  Value<DateTime> startedAt,
+  Value<DateTime?> completedAt,
+  Value<bool> success,
+});
+typedef $$PromptDeliveryLogTableTableUpdateCompanionBuilder
+    = PromptDeliveryLogTableCompanion Function({
+  Value<int> id,
+  Value<int> sessionIdFk,
+  Value<int?> templateIdFk,
+  Value<String> outcome,
+  Value<String> responseContent,
+  Value<String> triggerType,
+  Value<String> appPackage,
+  Value<int> secondsSpent,
+  Value<DateTime> startedAt,
+  Value<DateTime?> completedAt,
+  Value<bool> success,
+});
+
+class $$PromptDeliveryLogTableTableFilterComposer
+    extends Composer<_$AppDatabase, $PromptDeliveryLogTableTable> {
+  $$PromptDeliveryLogTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get sessionIdFk => $composableBuilder(
+      column: $table.sessionIdFk, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get templateIdFk => $composableBuilder(
+      column: $table.templateIdFk, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get outcome => $composableBuilder(
+      column: $table.outcome, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get responseContent => $composableBuilder(
+      column: $table.responseContent,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get triggerType => $composableBuilder(
+      column: $table.triggerType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get appPackage => $composableBuilder(
+      column: $table.appPackage, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get secondsSpent => $composableBuilder(
+      column: $table.secondsSpent, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get startedAt => $composableBuilder(
+      column: $table.startedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get completedAt => $composableBuilder(
+      column: $table.completedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get success => $composableBuilder(
+      column: $table.success, builder: (column) => ColumnFilters(column));
+}
+
+class $$PromptDeliveryLogTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $PromptDeliveryLogTableTable> {
+  $$PromptDeliveryLogTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get sessionIdFk => $composableBuilder(
+      column: $table.sessionIdFk, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get templateIdFk => $composableBuilder(
+      column: $table.templateIdFk,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get outcome => $composableBuilder(
+      column: $table.outcome, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get responseContent => $composableBuilder(
+      column: $table.responseContent,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get triggerType => $composableBuilder(
+      column: $table.triggerType, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get appPackage => $composableBuilder(
+      column: $table.appPackage, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get secondsSpent => $composableBuilder(
+      column: $table.secondsSpent,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get startedAt => $composableBuilder(
+      column: $table.startedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get completedAt => $composableBuilder(
+      column: $table.completedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get success => $composableBuilder(
+      column: $table.success, builder: (column) => ColumnOrderings(column));
+}
+
+class $$PromptDeliveryLogTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PromptDeliveryLogTableTable> {
+  $$PromptDeliveryLogTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get sessionIdFk => $composableBuilder(
+      column: $table.sessionIdFk, builder: (column) => column);
+
+  GeneratedColumn<int> get templateIdFk => $composableBuilder(
+      column: $table.templateIdFk, builder: (column) => column);
+
+  GeneratedColumn<String> get outcome =>
+      $composableBuilder(column: $table.outcome, builder: (column) => column);
+
+  GeneratedColumn<String> get responseContent => $composableBuilder(
+      column: $table.responseContent, builder: (column) => column);
+
+  GeneratedColumn<String> get triggerType => $composableBuilder(
+      column: $table.triggerType, builder: (column) => column);
+
+  GeneratedColumn<String> get appPackage => $composableBuilder(
+      column: $table.appPackage, builder: (column) => column);
+
+  GeneratedColumn<int> get secondsSpent => $composableBuilder(
+      column: $table.secondsSpent, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get startedAt =>
+      $composableBuilder(column: $table.startedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get completedAt => $composableBuilder(
+      column: $table.completedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get success =>
+      $composableBuilder(column: $table.success, builder: (column) => column);
+}
+
+class $$PromptDeliveryLogTableTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $PromptDeliveryLogTableTable,
+    PromptDeliveryLog,
+    $$PromptDeliveryLogTableTableFilterComposer,
+    $$PromptDeliveryLogTableTableOrderingComposer,
+    $$PromptDeliveryLogTableTableAnnotationComposer,
+    $$PromptDeliveryLogTableTableCreateCompanionBuilder,
+    $$PromptDeliveryLogTableTableUpdateCompanionBuilder,
+    (
+      PromptDeliveryLog,
+      BaseReferences<_$AppDatabase, $PromptDeliveryLogTableTable,
+          PromptDeliveryLog>
+    ),
+    PromptDeliveryLog,
+    PrefetchHooks Function()> {
+  $$PromptDeliveryLogTableTableTableManager(
+      _$AppDatabase db, $PromptDeliveryLogTableTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PromptDeliveryLogTableTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PromptDeliveryLogTableTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PromptDeliveryLogTableTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> sessionIdFk = const Value.absent(),
+            Value<int?> templateIdFk = const Value.absent(),
+            Value<String> outcome = const Value.absent(),
+            Value<String> responseContent = const Value.absent(),
+            Value<String> triggerType = const Value.absent(),
+            Value<String> appPackage = const Value.absent(),
+            Value<int> secondsSpent = const Value.absent(),
+            Value<DateTime> startedAt = const Value.absent(),
+            Value<DateTime?> completedAt = const Value.absent(),
+            Value<bool> success = const Value.absent(),
+          }) =>
+              PromptDeliveryLogTableCompanion(
+            id: id,
+            sessionIdFk: sessionIdFk,
+            templateIdFk: templateIdFk,
+            outcome: outcome,
+            responseContent: responseContent,
+            triggerType: triggerType,
+            appPackage: appPackage,
+            secondsSpent: secondsSpent,
+            startedAt: startedAt,
+            completedAt: completedAt,
+            success: success,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required int sessionIdFk,
+            Value<int?> templateIdFk = const Value.absent(),
+            Value<String> outcome = const Value.absent(),
+            Value<String> responseContent = const Value.absent(),
+            Value<String> triggerType = const Value.absent(),
+            Value<String> appPackage = const Value.absent(),
+            Value<int> secondsSpent = const Value.absent(),
+            Value<DateTime> startedAt = const Value.absent(),
+            Value<DateTime?> completedAt = const Value.absent(),
+            Value<bool> success = const Value.absent(),
+          }) =>
+              PromptDeliveryLogTableCompanion.insert(
+            id: id,
+            sessionIdFk: sessionIdFk,
+            templateIdFk: templateIdFk,
+            outcome: outcome,
+            responseContent: responseContent,
+            triggerType: triggerType,
+            appPackage: appPackage,
+            secondsSpent: secondsSpent,
+            startedAt: startedAt,
+            completedAt: completedAt,
+            success: success,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$PromptDeliveryLogTableTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $PromptDeliveryLogTableTable,
+        PromptDeliveryLog,
+        $$PromptDeliveryLogTableTableFilterComposer,
+        $$PromptDeliveryLogTableTableOrderingComposer,
+        $$PromptDeliveryLogTableTableAnnotationComposer,
+        $$PromptDeliveryLogTableTableCreateCompanionBuilder,
+        $$PromptDeliveryLogTableTableUpdateCompanionBuilder,
+        (
+          PromptDeliveryLog,
+          BaseReferences<_$AppDatabase, $PromptDeliveryLogTableTable,
+              PromptDeliveryLog>
+        ),
+        PromptDeliveryLog,
+        PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -9009,4 +10665,11 @@ class $AppDatabaseManager {
           _db, _db.notificationSettingsTable);
   $$NotificationsTableTableTableManager get notificationsTable =>
       $$NotificationsTableTableTableManager(_db, _db.notificationsTable);
+  $$SessionTableTableTableManager get sessionTable =>
+      $$SessionTableTableTableManager(_db, _db.sessionTable);
+  $$StudyConfigTableTableTableManager get studyConfigTable =>
+      $$StudyConfigTableTableTableManager(_db, _db.studyConfigTable);
+  $$PromptDeliveryLogTableTableTableManager get promptDeliveryLogTable =>
+      $$PromptDeliveryLogTableTableTableManager(
+          _db, _db.promptDeliveryLogTable);
 }

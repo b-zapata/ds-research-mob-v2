@@ -11,6 +11,7 @@
 import 'package:drift/drift.dart';
 import 'package:mindful/core/enums/app_theme_mode.dart';
 import 'package:mindful/core/enums/default_home_tab.dart';
+import 'package:mindful/core/enums/intervention_arm.dart';
 import 'package:mindful/config/app_constants.dart';
 
 @DataClassName("MindfulSettings")
@@ -67,4 +68,9 @@ class MindfulSettingsTable extends Table {
   /// The currently installed version of Mindful.
   /// Mainly used to show changelogs screen.
   TextColumn get appVersion => text().withDefault(const Constant(""))();
+
+  /// Intervention arm assignment (blank|mindfulness|friction|identity)
+  IntColumn get interventionArm => integer()
+      .map(const InterventionArmConverter())
+      .withDefault(const Constant(0))(); // Default to blank (index 0)
 }

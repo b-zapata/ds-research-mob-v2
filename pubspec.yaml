@@ -82,6 +82,9 @@ flutter:
     - assets/vectors/facebook.svg
     - assets/vectors/reddit.svg
 
+    # Intervention config
+    - assets/intervention_config.json
+
   # fonts:
   #   - family: Schyler
   #     fonts:

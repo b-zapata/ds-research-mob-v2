@@ -1,6 +1,7 @@
 import 'package:mindful/core/database/adapters/time_of_day_adapter.dart';
 import 'package:mindful/core/database/app_database.dart';
 import 'package:mindful/core/enums/default_home_tab.dart';
+import 'package:mindful/core/enums/intervention_arm.dart';
 import 'package:mindful/core/enums/recap_type.dart';
 import 'package:mindful/core/enums/reminder_type.dart';
 import 'package:mindful/core/enums/session_type.dart';
@@ -21,6 +22,8 @@ final defaultMindfulSettingsModel = MindfulSettings(
   lastEmergencyUsed: DateTime(0),
   isOnboardingDone: false,
   appVersion: "",
+  interventionArm: InterventionArm
+      .blank, // Change to: .blank, .mindfulness, .friction, or .identity
 );
 
 const defaultSharedUniqueDataModel = SharedUniqueData(

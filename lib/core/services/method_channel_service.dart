@@ -178,6 +178,15 @@ class MethodChannelService {
         jsonEncode(appRestrictions),
       );
 
+  /// Ensures the tracker service is running (needed for interventions).
+  Future<bool> ensureTrackerServiceRunning() async {
+    debugPrint('[Intervention] Ensuring tracker service is running...');
+    final result =
+        await _methodChannel.invokeMethod('ensureTrackerServiceRunning');
+    debugPrint('[Intervention] Tracker service start result: $result');
+    return result == true;
+  }
+
   /// Safe method to update restriction groups list in the TRACKER service.
   ///
   /// This method push the updated list to the service if it is already running
@@ -432,4 +441,16 @@ class MethodChannelService {
   /// Prompts the user to add Quick Focus Tile to the status bar
   Future<bool> promptForQuickTile() async =>
       await _methodChannel.invokeMethod('promptForQuickTile');
+
+  // ===========================================================================================
+  // ==================================== INTERVENTION =========================================
+  // ===========================================================================================
+
+  /// Sets the intervention participant arm (blank|mindfulness|friction|identity)
+  Future<bool> setInterventionArm(String arm) async =>
+      await _methodChannel.invokeMethod('setInterventionArm', arm);
+
+  /// Gets the current intervention participant arm
+  Future<String> getInterventionArm() async =>
+      await _methodChannel.invokeMethod('getInterventionArm') ?? 'blank';
 }

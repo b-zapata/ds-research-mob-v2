@@ -1,0 +1,9 @@
+{
+  "flaggedPackages": [
+    "com.instagram.android",
+    "com.twitter.android",
+    "com.facebook.katana",
+    "com.google.android.youtube"
+  ],
+  "retriggerMinutes": 5
+}

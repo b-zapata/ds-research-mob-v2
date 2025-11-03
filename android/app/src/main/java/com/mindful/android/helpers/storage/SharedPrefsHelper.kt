@@ -244,4 +244,28 @@ object SharedPrefsHelper {
         checkAndInitializeCrashLogPrefs(context)
         mCrashLogPrefs!!.edit().putString(PREF_KEY_CRASH_LOGS, "[]").apply()
     }
+
+    /**
+     * Gets or sets the intervention participant arm.
+     * 
+     * @param context The application context.
+     * @param arm The arm to set (blank|mindfulness|friction|identity), or null to get current.
+     * @return The current or newly set arm.
+     */
+    fun getSetParticipantArm(context: Context, arm: String?): String {
+        checkAndInitializeUniquePrefs(context)
+        arm?.let {
+            mUniquePrefs!!.edit().putString("participant_arm", it).apply()
+            return it
+        }
+        return mUniquePrefs!!.getString("participant_arm", "blank") ?: "blank"
+    }
+
+    /**
+     * Helper to get a string from SharedPreferences with a default value.
+     */
+    fun getString(context: Context, key: String, defaultValue: String?): String? {
+        checkAndInitializeUniquePrefs(context)
+        return mUniquePrefs!!.getString(key, defaultValue)
+    }
 }

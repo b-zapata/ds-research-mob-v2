@@ -64,6 +64,79 @@ class OverlayManager(
         }
     }
 
+    /**
+     * Shows a full screen, non-dismissable overlay for Intervention placeholders.
+     * Simple programmatic UI to avoid XML changes.
+     * arm: blank|mindfulness|friction|identity
+     */
+    fun showInterventionOverlay(
+        packageName: String,
+        arm: String,
+        onContinue: (() -> Unit)? = null,
+    ) {
+        Log.d(TAG, "showInterventionOverlay: called for $packageName [$arm], overlays.size=${overlays.size}")
+        // Return if overlay is not null
+        if (overlays.isNotEmpty()) {
+            Log.d(TAG, "showInterventionOverlay: Overlay already exists, skipping")
+            return
+        }
+
+        ThreadUtils.runOnMainThread {
+            runCatching {
+                if (!haveOverlayPermission(context)) {
+                    Log.w(TAG, "showInterventionOverlay: No overlay permission!")
+                    return@runOnMainThread
+                }
+
+                val root = LinearLayout(context).apply {
+                    orientation = LinearLayout.VERTICAL
+                    setBackgroundColor(0xFFFFFFFF.toInt())
+                    setPadding(64, 128, 64, 64)
+                    isClickable = true
+                    isFocusable = true
+                }
+
+                val title = android.widget.TextView(context).apply {
+                    textSize = 22f
+                    setTextColor(0xFF000000.toInt())
+                    text = when (arm.lowercase()) {
+                        "mindfulness" -> "Mindfulness Intervention"
+                        "friction" -> "Friction Intervention"
+                        "identity" -> "Identity-Based Intervention"
+                        else -> "Blank Pause Intervention"
+                    }
+                }
+                val subtitle = android.widget.TextView(context).apply {
+                    textSize = 14f
+                    setTextColor(0xFF666666.toInt())
+                    text = packageName
+                }
+
+                val spacer = View(context).apply { minimumHeight = 48 }
+
+                val button = android.widget.Button(context).apply {
+                    text = "Continue"
+                    setOnClickListener {
+                        dismissSheetOverlay()
+                        onContinue?.invoke()
+                    }
+                }
+
+                root.addView(title)
+                root.addView(subtitle)
+                root.addView(spacer)
+                root.addView(button)
+
+                Log.d(TAG, "showInterventionOverlay: Showing intervention for $packageName [$arm]")
+                windowManager.addView(root, sheetLayoutParams)
+                overlays.push(root)
+                Utils.vibrateDevice(context, 30L)
+            }.getOrElse {
+                SharedPrefsHelper.insertCrashLogToPrefs(context, it)
+            }
+        }
+    }
+
     fun showSheetOverlay(
         packageName: String,
         restrictionState: RestrictionState,

@@ -112,6 +112,16 @@ class FgMethodCallHandler(
                 result.success(true)
             }
 
+            "setInterventionArm" -> {
+                val arm = call.arguments() as? String ?: "blank"
+                SharedPrefsHelper.getSetParticipantArm(context, arm)
+                result.success(true)
+            }
+
+            "getInterventionArm" -> {
+                result.success(SharedPrefsHelper.getSetParticipantArm(context, null))
+            }
+
             "getDeviceInfo" -> {
                 result.success(AppUtils.getDeviceInfoMap(context))
             }
@@ -161,6 +171,17 @@ class FgMethodCallHandler(
                     call.arguments() ?: ""
                 )
                 updateTrackerServiceRestrictions(appRestrictions, null)
+                result.success(true)
+            }
+
+            "ensureTrackerServiceRunning" -> {
+                // Ensure tracker service is running for interventions
+                if (!trackerServiceConn.isActive) {
+                    trackerServiceConn.setOnConnectedCallback { service ->
+                        // Service connected, ready for interventions
+                    }
+                    trackerServiceConn.startAndBind()
+                }
                 result.success(true)
             }
 

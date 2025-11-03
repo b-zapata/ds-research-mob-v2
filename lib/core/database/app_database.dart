@@ -34,8 +34,12 @@ import 'package:mindful/core/database/tables/mindful_settings_table.dart';
 import 'package:mindful/core/database/tables/restriction_groups_table.dart';
 import 'package:mindful/core/database/tables/shared_unique_data_table.dart';
 import 'package:mindful/core/database/tables/wellbeing_table.dart';
+import 'package:mindful/core/database/tables/session_table.dart';
+import 'package:mindful/core/database/tables/study_config_table.dart';
+import 'package:mindful/core/database/tables/prompt_delivery_log_table.dart';
 import 'package:mindful/core/enums/app_theme_mode.dart';
 import 'package:mindful/core/enums/default_home_tab.dart';
+import 'package:mindful/core/enums/intervention_arm.dart';
 import 'package:mindful/core/enums/recap_type.dart';
 import 'package:mindful/core/enums/reminder_type.dart';
 import 'package:mindful/core/enums/session_type.dart';
@@ -64,6 +68,9 @@ part 'app_database.g.dart';
     AppUsageTable,
     NotificationSettingsTable,
     NotificationsTable,
+    SessionTable,
+    StudyConfigTable,
+    PromptDeliveryLogTable,
   ],
   daos: [UniqueRecordsDao, DynamicRecordsDao],
 )
@@ -82,7 +89,7 @@ class AppDatabase extends _$AppDatabase {
   //
   // STEP 6 => Add migration steps to migration strategy by create new file in migrations folder. See previous migrations for help
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   // Always use [runSafe()] for upgrades - why?
   // If a user imports a backup from a newer schema when they are on an older
@@ -106,6 +113,7 @@ class AppDatabase extends _$AppDatabase {
               from6To7: from6To7,
               from7To8: from7To8,
               from8To9: from8To9,
+              from9To10: from9To10,
             ),
           );
         },

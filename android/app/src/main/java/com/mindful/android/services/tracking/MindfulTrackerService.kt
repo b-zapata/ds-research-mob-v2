@@ -20,6 +20,7 @@ class MindfulTrackerService : Service() {
 
     private lateinit var overlayManager: OverlayManager
     private lateinit var reminderManager: ReminderManager
+    private lateinit var interventionManager: InterventionManager
 
     private lateinit var restrictionManager: RestrictionManager
     val getRestrictionManager get() = restrictionManager
@@ -28,8 +29,10 @@ class MindfulTrackerService : Service() {
     val getLaunchTrackingManager get() = launchTrackingManager
 
     override fun onCreate() {
+        Log.d(TAG, "MindfulTrackerService.onCreate()")
         overlayManager = OverlayManager(this)
         reminderManager = ReminderManager(overlayManager, ::onNewAppLaunch)
+        interventionManager = InterventionManager(this, overlayManager)
         restrictionManager = RestrictionManager(this, ::stopIfNoUsage)
         launchTrackingManager = LaunchTrackingManager(
             context = this,
@@ -37,6 +40,7 @@ class MindfulTrackerService : Service() {
             dismissOverlay = { overlayManager.dismissSheetOverlay() },
             cancelReminders = { reminderManager.cancelReminders() },
         )
+        Log.d(TAG, "MindfulTrackerService initialized, interventionManager created")
         super.onCreate()
     }
 
@@ -79,8 +83,12 @@ class MindfulTrackerService : Service() {
     @WorkerThread
     private fun onNewAppLaunch(packageName: String) {
         try {
+            Log.d(TAG, "onNewAppLaunch: App launched: $packageName")
             reminderManager.cancelReminders()
             overlayManager.dismissSheetOverlay()
+
+            // Intervention: trigger overlays for flagged apps; re-triggers handled inside
+            interventionManager.onNewAppLaunched(packageName)
 
             /// check current restrictions
             val currentOrFutureState = restrictionManager.isAppRestricted(packageName)
@@ -110,12 +118,18 @@ class MindfulTrackerService : Service() {
 
     private fun stopIfNoUsage() {
         if (restrictionManager.isIdle) {
-            Log.d(TAG, "Service no longer needed, stopping")
-            launchTrackingManager.dispose()
-            reminderManager.cancelReminders()
-            overlayManager.dismissSheetOverlay()
-            stopForeground(STOP_FOREGROUND_REMOVE)
-            stopSelf()
+            // Check if interventions are enabled - if so, keep service running
+            val hasInterventions = interventionManager.hasInterventionsEnabled()
+            if (!hasInterventions) {
+                Log.d(TAG, "Service no longer needed, stopping")
+                launchTrackingManager.dispose()
+                reminderManager.cancelReminders()
+                overlayManager.dismissSheetOverlay()
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                stopSelf()
+            } else {
+                Log.d(TAG, "Service kept running for interventions")
+            }
         }
     }
 
