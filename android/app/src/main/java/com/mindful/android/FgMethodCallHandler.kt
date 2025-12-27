@@ -122,6 +122,46 @@ class FgMethodCallHandler(
                 result.success(SharedPrefsHelper.getSetParticipantArm(context, null))
             }
 
+            "showTestIntervention" -> {
+                android.util.Log.d("FgMethodCallHandler", "showTestIntervention called")
+                val promptData = call.arguments as? Map<*, *> ?: emptyMap<Any, Any>()
+                android.util.Log.d("FgMethodCallHandler", "showTestIntervention promptData: $promptData")
+                val packageName = promptData["appPackage"] as? String ?: "com.mindful.android.debug"
+                val promptId = promptData["promptId"] as? String ?: ""
+                val promptText = promptData["text"] as? String ?: ""
+                val expectedInteraction = promptData["expectedInteraction"] as? String ?: "wait_out"
+                val minLockSeconds = (promptData["minLockSeconds"] as? Number)?.toInt() ?: 5
+                val sessionId = (promptData["sessionId"] as? Number)?.toInt()
+                val promptDeliveryLogId = (promptData["promptDeliveryLogId"] as? Number)?.toInt()
+
+                // Ensure tracker service is bound
+                if (!trackerServiceConn.isActive) {
+                    android.util.Log.d("FgMethodCallHandler", "showTestIntervention binding tracker service")
+                    trackerServiceConn.bindService()
+                    // Wait a bit for service to bind (on background thread)
+                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                        val overlayManager = trackerServiceConn.service?.getOverlayManager
+                        android.util.Log.d("FgMethodCallHandler", "showTestIntervention overlayManager (delayed): $overlayManager")
+                        if (overlayManager != null) {
+                            showTestInterventionOverlay(overlayManager, promptData, result)
+                        } else {
+                            result.error("SERVICE_UNAVAILABLE", "Tracker service not available after binding", null)
+                        }
+                    }, 500)
+                    return
+                }
+                
+                // Get overlay manager from tracker service
+                val overlayManager = trackerServiceConn.service?.getOverlayManager
+                android.util.Log.d("FgMethodCallHandler", "showTestIntervention overlayManager: $overlayManager, isActive: ${trackerServiceConn.isActive}")
+                
+                if (overlayManager != null) {
+                    showTestInterventionOverlay(overlayManager, promptData, result)
+                } else {
+                    result.error("SERVICE_UNAVAILABLE", "Tracker service not available", null)
+                }
+            }
+
             "getDeviceInfo" -> {
                 result.success(AppUtils.getDeviceInfoMap(context))
             }
@@ -455,6 +495,56 @@ class FgMethodCallHandler(
         }
     }
 
+    private fun showTestInterventionOverlay(
+        overlayManager: com.mindful.android.services.tracking.OverlayManager,
+        promptData: Map<*, *>,
+        result: MethodChannel.Result
+    ) {
+        val packageName = promptData["appPackage"] as? String ?: "com.mindful.android.debug"
+        val promptId = promptData["promptId"] as? String ?: ""
+        val promptText = promptData["text"] as? String ?: ""
+        val expectedInteraction = promptData["expectedInteraction"] as? String ?: "wait_out"
+        val minLockSeconds = (promptData["minLockSeconds"] as? Number)?.toInt() ?: 5
+        val sessionId = (promptData["sessionId"] as? Number)?.toInt()
+        val promptDeliveryLogId = (promptData["promptDeliveryLogId"] as? Number)?.toInt()
+
+        android.os.Handler(android.os.Looper.getMainLooper()).post {
+            android.util.Log.d("FgMethodCallHandler", "showTestIntervention calling showInterventionOverlay with isTestMode=true")
+            overlayManager.showInterventionOverlay(
+                packageName = packageName,
+                promptId = promptId,
+                promptText = promptText,
+                expectedInteraction = expectedInteraction,
+                minLockSeconds = minLockSeconds,
+                isTestMode = true,
+                onResponse = { response ->
+                    // Report completion to Flutter
+                    val completionArgs = mapOf(
+                        "sessionId" to (sessionId ?: 0),
+                        "promptDeliveryLogId" to (promptDeliveryLogId ?: 0),
+                        "success" to true,
+                        "outcome" to "completed",
+                        "secondsSpent" to 0,
+                        "responseContent" to response
+                    )
+                    com.mindful.android.helpers.FlutterMethodChannelHelper.invokeMethod("reportInterventionCompleted", completionArgs)
+                },
+                onDismiss = {
+                    // Report cancellation to Flutter (async, non-blocking)
+                    val completionArgs = mapOf(
+                        "sessionId" to (sessionId ?: 0),
+                        "promptDeliveryLogId" to (promptDeliveryLogId ?: 0),
+                        "success" to false,
+                        "outcome" to "cancelled",
+                        "secondsSpent" to 0,
+                        "responseContent" to ""
+                    )
+                    com.mindful.android.helpers.FlutterMethodChannelHelper.invokeMethodAsync("reportInterventionCompleted", completionArgs)
+                }
+            )
+        }
+        result.success(true)
+    }
 
     /**
      * Updates app and group restrictions in the tracker service.

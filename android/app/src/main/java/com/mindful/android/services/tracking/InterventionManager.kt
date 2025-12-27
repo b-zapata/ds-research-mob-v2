@@ -154,6 +154,7 @@ class InterventionManager(
         Handler(Looper.getMainLooper()).post {
             overlayManager.showInterventionOverlay(
                 packageName = packageName,
+                promptId = promptId,
                 promptText = promptText,
                 expectedInteraction = expectedInteraction,
                 minLockSeconds = minLockSeconds,

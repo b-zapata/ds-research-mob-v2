@@ -514,4 +514,15 @@ class MethodChannelService {
   /// Gets the current intervention participant arm
   Future<String> getInterventionArm() async =>
       await _methodChannel.invokeMethod('getInterventionArm') ?? 'blank';
+
+  /// Trigger a test intervention with a specific prompt (for manual testing)
+  Future<bool> showTestIntervention(Map<String, dynamic> promptData) async {
+    try {
+      await _methodChannel.invokeMethod('showTestIntervention', promptData);
+      return true;
+    } catch (e) {
+      debugPrint('[MethodChannelService] Error showing test intervention: $e');
+      return false;
+    }
+  }
 }

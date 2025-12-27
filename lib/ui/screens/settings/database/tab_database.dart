@@ -20,6 +20,7 @@ import 'package:mindful/ui/common/default_dropdown_tile.dart';
 import 'package:mindful/ui/common/sliver_tabs_bottom_padding.dart';
 import 'package:mindful/ui/screens/settings/database/export_clear_crash_logs.dart';
 import 'package:mindful/ui/screens/settings/database/import_export_db.dart';
+import 'package:mindful/ui/screens/settings/database/test_interventions.dart';
 import 'package:mindful/ui/screens/settings/database/view_intervention_logs.dart';
 
 class TabDatabase extends ConsumerWidget {
@@ -72,6 +73,9 @@ class TabDatabase extends ConsumerWidget {
 
         /// Intervention logs
         const ViewInterventionLogs(),
+
+        /// Test interventions
+        const TestInterventions(),
 
         const SliverTabsBottomPadding()
       ],

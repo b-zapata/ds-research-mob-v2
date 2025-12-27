@@ -19,6 +19,7 @@ class MindfulTrackerService : Service() {
     private val mBinder = ServiceBinder(this@MindfulTrackerService)
 
     private lateinit var overlayManager: OverlayManager
+    val getOverlayManager get() = overlayManager
     private lateinit var reminderManager: ReminderManager
     private lateinit var interventionManager: InterventionManager
 

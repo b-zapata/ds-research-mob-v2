@@ -75,4 +75,36 @@ object FlutterMethodChannelHelper {
             return null
         }
     }
+
+    /**
+     * Invoke a Flutter method asynchronously without waiting for a response (fire-and-forget)
+     * Use this for non-critical calls where immediate response is not needed
+     */
+    fun invokeMethodAsync(method: String, arguments: Map<String, Any>? = null) {
+        val channel = methodChannel ?: run {
+            Log.w(TAG, "Method channel not initialized, cannot invoke $method")
+            return
+        }
+
+        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        handler.post {
+            channel.invokeMethod(
+                method,
+                arguments,
+                object : io.flutter.plugin.common.MethodChannel.Result {
+                    override fun success(result: Any?) {
+                        Log.d(TAG, "Async method $method completed successfully")
+                    }
+
+                    override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
+                        Log.e(TAG, "Error invoking $method: $errorCode - $errorMessage")
+                    }
+
+                    override fun notImplemented() {
+                        Log.w(TAG, "Method $method not implemented in Flutter")
+                    }
+                }
+            )
+        }
+    }
 }
