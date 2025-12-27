@@ -1,0 +1,148 @@
+{
+  "prompt_library": [
+    {
+      "group": "identity",
+      "level": 1,
+      "prompts": [
+        { "id": "identity_1_1", "text": "Would {best_self_description} choose to scroll right now?", "min_lock_seconds": 5, "expected_interaction": "yes_no" },
+        { "id": "identity_1_2", "text": "Is this moment a step toward {goal_1}?", "min_lock_seconds": 5, "expected_interaction": "yes_no" },
+        { "id": "identity_1_3", "text": "Does this align with {top_value_1}?", "min_lock_seconds": 5, "expected_interaction": "yes_no" },
+        { "id": "identity_1_4", "text": "Future You is watching 👀 — approve?", "min_lock_seconds": 5, "expected_interaction": "yes_no" },
+        { "id": "identity_1_5", "text": "Remember {goal_1}. Will this help you get there?", "min_lock_seconds": 5, "expected_interaction": "yes_no" },
+        { "id": "identity_1_6", "text": "Would this make {top_trait_1} proud?", "min_lock_seconds": 5, "expected_interaction": "yes_no" },
+        { "id": "identity_1_7", "text": "Does this reflect {top_value_1} & {top_value_2}?", "min_lock_seconds": 5, "expected_interaction": "yes_no" },
+        { "id": "identity_1_8", "text": "Is this what {best_self_description} would prioritize?", "min_lock_seconds": 5, "expected_interaction": "yes_no" },
+        { "id": "identity_1_9", "text": "Is this choice aligned with {top_investment_area_1}?", "min_lock_seconds": 5, "expected_interaction": "yes_no" },
+        { "id": "identity_1_10", "text": "Would you be proud of this choice tonight?", "min_lock_seconds": 5, "expected_interaction": "yes_no" },
+        { "id": "identity_1_11", "text": "Are you acting like {top_trait_1} right now?", "min_lock_seconds": 5, "expected_interaction": "yes_no" },
+        { "id": "identity_1_12", "text": "Choose {top_value_1} over autopilot?", "min_lock_seconds": 5, "expected_interaction": "yes_no" }
+      ]
+    },
+    {
+      "group": "identity",
+      "level": 2,
+      "prompts": [
+        { "id": "identity_2_1", "text": "Which of your core values feels most meaningful to honor right now?", "min_lock_seconds": 8, "expected_interaction": "multiple_choice" },
+        { "id": "identity_2_2", "text": "How does opening this app align with your goal of {goal_1} or {goal_2}?", "min_lock_seconds": 8, "expected_interaction": "short_text" },
+        { "id": "identity_2_3", "text": "What would the {top_trait_1} version of you choose to do right now?", "min_lock_seconds": 8, "expected_interaction": "multiple_choice" },
+        { "id": "identity_2_4", "text": "If you paused here, which part of your life would you be investing in instead?", "min_lock_seconds": 8, "expected_interaction": "multiple_choice" },
+        { "id": "identity_2_5", "text": "Right now, are you acting more like {best_self_description}, or drifting away from it?", "min_lock_seconds": 8, "expected_interaction": "short_text" },
+        { "id": "identity_2_6", "text": "Imagine your future self who's accomplished {goal_1}. What would they tell you to do in this moment?", "min_lock_seconds": 8, "expected_interaction": "short_text" },
+        { "id": "identity_2_7", "text": "Name one thing that matters more to you than scrolling right now.", "min_lock_seconds": 8, "expected_interaction": "short_text" }
+      ]
+    },
+    {
+      "group": "identity",
+      "level": 3,
+      "prompts": [
+        { "id": "identity_3_1", "text": "Visualize {best_self_description}. What would they choose now, and why?", "min_lock_seconds": 15, "expected_interaction": "short_text" },
+        { "id": "identity_3_2", "text": "Visualize achieving {goal_1}. Where are you? How do you feel? What choices got you there?", "min_lock_seconds": 15, "expected_interaction": "short_text" },
+        { "id": "identity_3_3", "text": "Describe how living by {top_value_1} and {top_value_2} has shaped your best days.", "min_lock_seconds": 15, "expected_interaction": "short_text" },
+        { "id": "identity_3_4", "text": "If you were mentoring someone to become more {top_trait_1} and {top_trait_2}, what would you advise them to do right now?", "min_lock_seconds": 15, "expected_interaction": "short_text" },
+        { "id": "identity_3_5", "text": "Write a quick reminder to your future self—the one who's achieved {goal_1}—about why this choice matters.", "min_lock_seconds": 15, "expected_interaction": "short_text" }
+      ]
+    },
+    {
+      "group": "mindfulness",
+      "level": 1,
+      "prompts": [
+        { "id": "mindfulness_1_1", "text": "Take one slow breath. Feel the air entering and leaving your nose.", "min_lock_seconds": 10, "expected_interaction": "wait_out" },
+        { "id": "mindfulness_1_2", "text": "Notice your feet on the floor. Feel the weight and contact.", "min_lock_seconds": 10, "expected_interaction": "wait_out" },
+        { "id": "mindfulness_1_3", "text": "Unclench your jaw and breathe out slowly.", "min_lock_seconds": 10, "expected_interaction": "wait_out" },
+        { "id": "mindfulness_1_4", "text": "Look away from the screen. Focus on something 10 feet away for five seconds.", "min_lock_seconds": 10, "expected_interaction": "wait_out" },
+        { "id": "mindfulness_1_5", "text": "Notice one sound around you. Listen closely for five seconds.", "min_lock_seconds": 10, "expected_interaction": "wait_out" },
+        { "id": "mindfulness_1_6", "text": "Take two deep breaths—slow and steady.", "min_lock_seconds": 10, "expected_interaction": "wait_out" },
+        { "id": "mindfulness_1_7", "text": "Bring one hand to your chest and feel one full breath.", "min_lock_seconds": 10, "expected_interaction": "wait_out" },
+        { "id": "mindfulness_1_8", "text": "Feel your phone in your hand. Notice its texture and weight.", "min_lock_seconds": 10, "expected_interaction": "wait_out" },
+        { "id": "mindfulness_1_9", "text": "Count three breaths in silence.", "min_lock_seconds": 10, "expected_interaction": "wait_out" },
+        { "id": "mindfulness_1_10", "text": "Notice your shoulders. Let them drop naturally.", "min_lock_seconds": 10, "expected_interaction": "wait_out" },
+        { "id": "mindfulness_1_11", "text": "Let your eyes rest. Blink slowly twice.", "min_lock_seconds": 10, "expected_interaction": "wait_out" },
+        { "id": "mindfulness_1_12", "text": "Feel the ground under you. Take a slow breath.", "min_lock_seconds": 10, "expected_interaction": "wait_out" }
+      ]
+    },
+    {
+      "group": "mindfulness",
+      "level": 2,
+      "prompts": [
+        { "id": "mindfulness_2_1", "text": "Take three slow breaths. On each exhale, release tension from your body.", "min_lock_seconds": 30, "expected_interaction": "tap_mid_and_end" },
+        { "id": "mindfulness_2_2", "text": "Close your eyes. Notice one thing you can smell, one you can hear, one you can feel.", "min_lock_seconds": 30, "expected_interaction": "tap_mid_and_end" },
+        { "id": "mindfulness_2_3", "text": "Straighten your posture and breathe deeply five times.", "min_lock_seconds": 30, "expected_interaction": "tap_mid_and_end" },
+        { "id": "mindfulness_2_4", "text": "Do a mini body scan: forehead, shoulders, chest, stomach, legs.", "min_lock_seconds": 30, "expected_interaction": "tap_mid_and_end" },
+        { "id": "mindfulness_2_5", "text": "Count ten breaths silently. Focus on the pause between inhales and exhales.", "min_lock_seconds": 30, "expected_interaction": "tap_mid_and_end" },
+        { "id": "mindfulness_2_6", "text": "Focus on your breath at the tip of your nose for 30 seconds.", "min_lock_seconds": 30, "expected_interaction": "tap_mid_and_end" },
+        { "id": "mindfulness_2_7", "text": "Bring attention to your posture and take five mindful breaths.", "min_lock_seconds": 30, "expected_interaction": "tap_mid_and_end" }
+      ]
+    },
+    {
+      "group": "mindfulness",
+      "level": 3,
+      "prompts": [
+        { "id": "mindfulness_3_1", "text": "Follow the guided breathing: In 4, Hold 4, Out 6—repeat for one minute.", "min_lock_seconds": 60, "expected_interaction": "tap_breathing_bubble" },
+        { "id": "mindfulness_3_2", "text": "Close your eyes for one minute and focus only on the sensation of breathing.", "min_lock_seconds": 60, "expected_interaction": "tap_breathing_bubble" },
+        { "id": "mindfulness_3_3", "text": "Do a slow, 60-second body scan from head to toe, noticing sensations.", "min_lock_seconds": 60, "expected_interaction": "tap_mid_and_end" },
+        { "id": "mindfulness_3_4", "text": "Listen for the sounds around you. Notice each sound come and go for one minute.", "min_lock_seconds": 60, "expected_interaction": "tap_mid_and_end" },
+        { "id": "mindfulness_3_5", "text": "Spend one minute focusing on your breath. Each time your mind wanders, bring it back gently.", "min_lock_seconds": 60, "expected_interaction": "tap_mid_and_end" }
+      ]
+    },
+    {
+      "group": "friction",
+      "level": 1,
+      "prompts": [
+        { "id": "friction_1_1", "text": "Tap and hold until the ring completes.", "min_lock_seconds": 5, "expected_interaction": "tap_hold" },
+        { "id": "friction_1_2", "text": "Slide the bar to 100% to continue.", "min_lock_seconds": 5, "expected_interaction": "slider" },
+        { "id": "friction_1_3", "text": "Tap the highlighted shape.", "min_lock_seconds": 5, "expected_interaction": "tap" },
+        { "id": "friction_1_4", "text": "Hold the button for five seconds to unlock.", "min_lock_seconds": 5, "expected_interaction": "tap_hold" },
+        { "id": "friction_1_5", "text": "Match the color pairs shown on screen.", "min_lock_seconds": 5, "expected_interaction": "tap_sequence" },
+        { "id": "friction_1_6", "text": "Slide left to right twice.", "min_lock_seconds": 5, "expected_interaction": "slider" },
+        { "id": "friction_1_7", "text": "Tap the moving circle when it turns green.", "min_lock_seconds": 5, "expected_interaction": "tap" },
+        { "id": "friction_1_8", "text": "Hold your finger on screen until the ring completes.", "min_lock_seconds": 5, "expected_interaction": "tap_hold" },
+        { "id": "friction_1_9", "text": "Drag the slider exactly to the midpoint.", "min_lock_seconds": 5, "expected_interaction": "slider" },
+        { "id": "friction_1_10", "text": "Tap the symbol that matches the one before.", "min_lock_seconds": 5, "expected_interaction": "tap_sequence" },
+        { "id": "friction_1_11", "text": "Hold for a full breath in and out.", "min_lock_seconds": 5, "expected_interaction": "tap_hold" },
+        { "id": "friction_1_12", "text": "Slide the lock open slowly.", "min_lock_seconds": 5, "expected_interaction": "slider" }
+      ]
+    },
+    {
+      "group": "friction",
+      "level": 2,
+      "prompts": [
+        { "id": "friction_2_1", "text": "Slide puzzle: arrange blocks until aligned.", "min_lock_seconds": 15, "expected_interaction": "slider" },
+        { "id": "friction_2_2", "text": "Tap the sequence: 3–1–2.", "min_lock_seconds": 15, "expected_interaction": "tap_sequence" },
+        { "id": "friction_2_3", "text": "Solve: 8 + 5 = ?", "min_lock_seconds": 15, "expected_interaction": "tap" },
+        { "id": "friction_2_4", "text": "Hold the button for ten seconds.", "min_lock_seconds": 15, "expected_interaction": "tap_hold" },
+        { "id": "friction_2_5", "text": "Slide to unlock three times.", "min_lock_seconds": 15, "expected_interaction": "slider" },
+        { "id": "friction_2_6", "text": "Type the phrase: 'pause before scroll'.", "min_lock_seconds": 15, "expected_interaction": "type_phrase" },
+        { "id": "friction_2_7", "text": "Tap the shapes in order from smallest to largest.", "min_lock_seconds": 15, "expected_interaction": "tap_sequence" }
+      ]
+    },
+    {
+      "group": "friction",
+      "level": 3,
+      "prompts": [
+        { "id": "friction_3_1", "text": "Complete the slider maze to unlock.", "min_lock_seconds": 30, "expected_interaction": "slider" },
+        { "id": "friction_3_2", "text": "Hold for 20 seconds until the circle fills.", "min_lock_seconds": 30, "expected_interaction": "tap_hold" },
+        { "id": "friction_3_3", "text": "Type the phrase: 'I choose focus now.'", "min_lock_seconds": 30, "expected_interaction": "type_phrase" },
+        { "id": "friction_3_4", "text": "Tap the symbols in the pattern shown.", "min_lock_seconds": 30, "expected_interaction": "tap_sequence" },
+        { "id": "friction_3_5", "text": "Solve a three-step slider + tap combo to continue.", "min_lock_seconds": 30, "expected_interaction": "combo" }
+      ]
+    },
+    {
+      "group": "blank",
+      "level": 1,
+      "min_lock_seconds": 15,
+      "expected_interaction": "wait_out"
+    },
+    {
+      "group": "blank",
+      "level": 2,
+      "min_lock_seconds": 30,
+      "expected_interaction": "wait_out"
+    },
+    {
+      "group": "blank",
+      "level": 3,
+      "min_lock_seconds": 60,
+      "expected_interaction": "wait_out"
+    }
+  ]
+}

@@ -23,7 +23,7 @@ final defaultMindfulSettingsModel = MindfulSettings(
   isOnboardingDone: false,
   appVersion: "",
   interventionArm: InterventionArm
-      .blank, // Change to: .blank, .mindfulness, .friction, or .identity
+      .identity, // Change to: .blank, .mindfulness, .friction, or .identity
 );
 
 const defaultSharedUniqueDataModel = SharedUniqueData(

@@ -44,22 +44,34 @@ class OverlayManager(
     fun dismissSheetOverlay() {
         overlays.pollFirst()?.let { sheetOverlay ->
             ThreadUtils.runOnMainThread {
-                // Get views
+                // Get views (may be null for programmatic intervention overlays)
                 val bg = sheetOverlay.findViewById<View>(R.id.overlay_background)
                 val quote = sheetOverlay.findViewById<View>(R.id.overlay_sheet_quote_panel)
                 val sheet = sheetOverlay.findViewById<LinearLayout>(R.id.overlay_sheet)
 
-                // Animate
-                bg.animate().alpha(0f).setDuration(400).start()
-                quote.animate().alpha(0f).setDuration(400).start()
-                sheet.animate()
-                    .translationY(SLIDE_DOWN_END_Y)
-                    .setInterpolator(OvershootInterpolator(1.5f))
-                    .setDuration(500)
-                    .withEndAction {
-                        windowManager.removeView(sheetOverlay)
-                    }
-                    .start()
+                // Check if this is an XML-based overlay (has the expected views)
+                if (bg != null && quote != null && sheet != null) {
+                    // XML-based overlay: animate out
+                    bg.animate().alpha(0f).setDuration(400).start()
+                    quote.animate().alpha(0f).setDuration(400).start()
+                    sheet.animate()
+                        .translationY(SLIDE_DOWN_END_Y)
+                        .setInterpolator(OvershootInterpolator(1.5f))
+                        .setDuration(500)
+                        .withEndAction {
+                            windowManager.removeView(sheetOverlay)
+                        }
+                        .start()
+                } else {
+                    // Programmatic overlay (intervention): simple fade out and remove
+                    sheetOverlay.animate()
+                        .alpha(0f)
+                        .setDuration(300)
+                        .withEndAction {
+                            windowManager.removeView(sheetOverlay)
+                        }
+                        .start()
+                }
             }
         }
     }
@@ -68,13 +80,39 @@ class OverlayManager(
      * Shows a full screen, non-dismissable overlay for Intervention placeholders.
      * Simple programmatic UI to avoid XML changes.
      * arm: blank|mindfulness|friction|identity
+     * 
+     * Legacy method for backward compatibility
      */
     fun showInterventionOverlay(
         packageName: String,
         arm: String,
         onContinue: (() -> Unit)? = null,
     ) {
-        Log.d(TAG, "showInterventionOverlay: called for $packageName [$arm], overlays.size=${overlays.size}")
+        showInterventionOverlay(
+            packageName = packageName,
+            promptText = "", // Empty for placeholder
+            expectedInteraction = "wait_out",
+            minLockSeconds = 5,
+            onResponse = null, // Placeholder doesn't need response
+            onContinue = onContinue,
+            onDismiss = null
+        )
+    }
+
+    /**
+     * Shows intervention overlay with actual prompt text and interaction handling
+     */
+    fun showInterventionOverlay(
+        packageName: String,
+        promptText: String,
+        expectedInteraction: String,
+        minLockSeconds: Int,
+        onResponse: ((String) -> Unit)? = null,
+        onContinue: (() -> Unit)? = null,
+        onDismiss: (() -> Unit)? = null,
+    ) {
+        Log.d(TAG, "showInterventionOverlay: called for $packageName, interaction=$expectedInteraction, lockSeconds=$minLockSeconds")
+        
         // Return if overlay is not null
         if (overlays.isNotEmpty()) {
             Log.d(TAG, "showInterventionOverlay: Overlay already exists, skipping")
@@ -96,44 +134,150 @@ class OverlayManager(
                     isFocusable = true
                 }
 
-                val title = android.widget.TextView(context).apply {
-                    textSize = 22f
+                // Prompt text
+                val promptTextView = android.widget.TextView(context).apply {
+                    textSize = 18f
                     setTextColor(0xFF000000.toInt())
-                    text = when (arm.lowercase()) {
-                        "mindfulness" -> "Mindfulness Intervention"
-                        "friction" -> "Friction Intervention"
-                        "identity" -> "Identity-Based Intervention"
-                        else -> "Blank Pause Intervention"
-                    }
-                }
-                val subtitle = android.widget.TextView(context).apply {
-                    textSize = 14f
-                    setTextColor(0xFF666666.toInt())
-                    text = packageName
+                    text = if (promptText.isNotEmpty()) promptText else "Intervention"
+                    setPadding(0, 0, 0, 32)
                 }
 
-                val spacer = View(context).apply { minimumHeight = 48 }
-
-                val button = android.widget.Button(context).apply {
-                    text = "Continue"
-                    setOnClickListener {
+                // Interaction UI based on expectedInteraction type
+                val interactionView = createInteractionView(
+                    expectedInteraction = expectedInteraction,
+                    minLockSeconds = minLockSeconds,
+                    onInteractionComplete = { response ->
+                        onResponse?.invoke(response)
                         dismissSheetOverlay()
                         onContinue?.invoke()
                     }
+                )
+
+                val spacer = View(context).apply { minimumHeight = 48 }
+
+                // Continue button (for interactions that don't auto-complete)
+                // Only show if interaction doesn't auto-complete (like wait_out)
+                val button = if (expectedInteraction.lowercase() == "wait_out") {
+                    android.widget.Button(context).apply {
+                        text = "Continue"
+                        setOnClickListener {
+                            onResponse?.invoke("completed")
+                            dismissSheetOverlay()
+                            onContinue?.invoke()
+                        }
+                    }
+                } else {
+                    null
                 }
 
-                root.addView(title)
-                root.addView(subtitle)
+                root.addView(promptTextView)
+                if (interactionView != null) {
+                    root.addView(interactionView)
+                }
                 root.addView(spacer)
-                root.addView(button)
+                if (button != null) {
+                    root.addView(button)
+                }
 
-                Log.d(TAG, "showInterventionOverlay: Showing intervention for $packageName [$arm]")
+                Log.d(TAG, "showInterventionOverlay: Showing intervention for $packageName")
                 windowManager.addView(root, sheetLayoutParams)
                 overlays.push(root)
                 Utils.vibrateDevice(context, 30L)
+
+                // Handle wait_out: auto-dismiss after minLockSeconds
+                if (expectedInteraction == "wait_out" && minLockSeconds > 0) {
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        if (overlays.isNotEmpty() && overlays.peekFirst() == root) {
+                            onResponse?.invoke("completed")
+                            dismissSheetOverlay()
+                            onContinue?.invoke()
+                        }
+                    }, minLockSeconds * 1000L)
+                }
             }.getOrElse {
                 SharedPrefsHelper.insertCrashLogToPrefs(context, it)
             }
+        }
+    }
+
+    /**
+     * Create interaction-specific UI based on expectedInteraction type
+     * Returns null if no special UI needed (just show prompt text)
+     * onInteractionComplete is called with the response value (e.g., "yes", "no", "75", "completed")
+     */
+    private fun createInteractionView(
+        expectedInteraction: String,
+        minLockSeconds: Int,
+        onInteractionComplete: (String) -> Unit
+    ): View? {
+        return when (expectedInteraction.lowercase()) {
+            "yes_no" -> {
+                // Yes/No buttons
+                LinearLayout(context).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    val yesBtn = android.widget.Button(context).apply {
+                        text = "Yes"
+                        setOnClickListener { onInteractionComplete("yes") }
+                    }
+                    val noBtn = android.widget.Button(context).apply {
+                        text = "No"
+                        setOnClickListener { onInteractionComplete("no") }
+                    }
+                    addView(yesBtn)
+                    addView(noBtn)
+                }
+            }
+            "slider" -> {
+                // Slider interaction
+                var hasCompleted = false
+                android.widget.SeekBar(context).apply {
+                    max = 100
+                    progress = 0
+                    setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+                        override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
+                            if (progress >= 100 && !hasCompleted) {
+                                hasCompleted = true
+                                onInteractionComplete("100")
+                            }
+                        }
+                        override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
+                        override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {
+                            // Capture final value when user releases (if not already completed)
+                            seekBar?.let {
+                                if (!hasCompleted && it.progress < 100) {
+                                    hasCompleted = true
+                                    onInteractionComplete(it.progress.toString())
+                                }
+                            }
+                        }
+                    })
+                }
+            }
+            "tap_hold" -> {
+                // Tap and hold button
+                android.widget.Button(context).apply {
+                    text = "Hold to Continue"
+                    setOnTouchListener { v, event ->
+                        when (event.action) {
+                            android.view.MotionEvent.ACTION_DOWN -> {
+                                // Start hold timer
+                                Handler(Looper.getMainLooper()).postDelayed({
+                                    if (v.isPressed) {
+                                        onInteractionComplete("completed")
+                                    }
+                                }, minLockSeconds * 1000L)
+                                true
+                            }
+                            android.view.MotionEvent.ACTION_UP -> {
+                                v.isPressed = false
+                                true
+                            }
+                            else -> false
+                        }
+                    }
+                }
+            }
+            else -> null // wait_out, tap, etc. - no special UI
         }
     }
 

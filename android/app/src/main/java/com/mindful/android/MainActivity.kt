@@ -16,6 +16,7 @@ import android.os.Bundle
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import com.mindful.android.helpers.AlarmTasksSchedulingHelper.scheduleMidnightResetTask
+import com.mindful.android.helpers.FlutterMethodChannelHelper
 import com.mindful.android.helpers.device.NotificationHelper
 import com.mindful.android.helpers.storage.SharedPrefsHelper
 import io.flutter.embedding.android.FlutterFragmentActivity
@@ -62,6 +63,9 @@ class MainActivity : FlutterFragmentActivity() {
             AppConstants.FLUTTER_METHOD_CHANNEL_FG
         )
         methodChannel.setMethodCallHandler(fgMethodCallHandler)
+
+        // Initialize FlutterMethodChannelHelper for service-to-Flutter calls
+        FlutterMethodChannelHelper.initialize(flutterEngine)
 
         // Get the self start status
         val isSelfStart =

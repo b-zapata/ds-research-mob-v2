@@ -18,7 +18,10 @@ class PromptDeliveryLogTable extends Table {
   /// Foreign key to Session table
   IntColumn get sessionIdFk => integer()();
 
-  /// Foreign key to template (nullable for placeholders)
+  /// Foreign key to Prompt table (references Prompt.id)
+  TextColumn get promptIdFk => text().withDefault(const Constant(""))();
+
+  /// Foreign key to template (nullable for placeholders, legacy)
   IntColumn get templateIdFk =>
       integer().nullable().withDefault(const Constant(null))();
 

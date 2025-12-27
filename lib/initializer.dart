@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mindful/core/services/drift_db_service.dart';
 import 'package:mindful/core/services/method_channel_service.dart';
 import 'package:mindful/intervention/data/participant_repo.dart';
+import 'package:mindful/intervention/data/prompt_repo.dart';
 
 /// Initializer to initialize necessary things.
 class Initializer {
@@ -30,6 +31,33 @@ class Initializer {
 
     /// Ensure tracker service is running for interventions
     await MethodChannelService.instance.ensureTrackerServiceRunning();
+
+    /// Load prompts from asset file if not already loaded
+    /// This loads prompts for ALL arms into the database
+    try {
+      final promptRepo = PromptRepo(DriftDbService.instance.driftDb);
+      final dynamicDao = DriftDbService.instance.driftDb.dynamicRecordsDao;
+      
+      // Check if ANY prompts exist (for any arm)
+      bool hasAnyPrompts = false;
+      for (final arm in [0, 1, 2, 3]) {
+        if (await dynamicDao.hasPromptsForGroup(arm)) {
+          hasAnyPrompts = true;
+          break;
+        }
+      }
+      
+      if (!hasAnyPrompts) {
+        debugPrint('[Initializer] No prompts found, loading from asset file...');
+        await promptRepo.loadPromptsFromAsset();
+        debugPrint('[Initializer] Successfully loaded all prompts from asset');
+      } else {
+        debugPrint('[Initializer] Prompts already loaded, skipping asset load');
+      }
+    } catch (e) {
+      debugPrint('[Initializer] Error loading prompts: $e');
+      // Don't fail initialization if prompts fail to load
+    }
 
     /// fetch app restrictions
     var appRestrictions = await dynamicDao.fetchAppsRestrictions();

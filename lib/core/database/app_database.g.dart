@@ -2529,7 +2529,7 @@ class $MindfulSettingsTableTable extends MindfulSettingsTable
               'intervention_arm', aliasedName, false,
               type: DriftSqlType.int,
               requiredDuringInsert: false,
-              defaultValue: const Constant(3))
+              defaultValue: const Constant(0))
           .withConverter<InterventionArm>(
               $MindfulSettingsTableTable.$converterinterventionArm);
   @override
@@ -6070,8 +6070,33 @@ class $SessionTableTable extends SessionTable
       type: DriftSqlType.dateTime,
       requiredDuringInsert: false,
       defaultValue: Constant(DateTime.now()));
+  static const VerificationMeta _appPackageMeta =
+      const VerificationMeta('appPackage');
   @override
-  List<GeneratedColumn> get $columns => [id, date, createdAt, updatedAt];
+  late final GeneratedColumn<String> appPackage = GeneratedColumn<String>(
+      'app_package', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(""));
+  static const VerificationMeta _startedAtMeta =
+      const VerificationMeta('startedAt');
+  @override
+  late final GeneratedColumn<DateTime> startedAt = GeneratedColumn<DateTime>(
+      'started_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: Constant(DateTime.now()));
+  static const VerificationMeta _endedAtMeta =
+      const VerificationMeta('endedAt');
+  @override
+  late final GeneratedColumn<DateTime> endedAt = GeneratedColumn<DateTime>(
+      'ended_at', aliasedName, true,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(null));
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, date, createdAt, updatedAt, appPackage, startedAt, endedAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -6097,6 +6122,20 @@ class $SessionTableTable extends SessionTable
       context.handle(_updatedAtMeta,
           updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
     }
+    if (data.containsKey('app_package')) {
+      context.handle(
+          _appPackageMeta,
+          appPackage.isAcceptableOrUnknown(
+              data['app_package']!, _appPackageMeta));
+    }
+    if (data.containsKey('started_at')) {
+      context.handle(_startedAtMeta,
+          startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta));
+    }
+    if (data.containsKey('ended_at')) {
+      context.handle(_endedAtMeta,
+          endedAt.isAcceptableOrUnknown(data['ended_at']!, _endedAtMeta));
+    }
     return context;
   }
 
@@ -6114,6 +6153,12 @@ class $SessionTableTable extends SessionTable
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+      appPackage: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}app_package'])!,
+      startedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}started_at'])!,
+      endedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}ended_at']),
     );
   }
 
@@ -6135,11 +6180,23 @@ class Session extends DataClass implements Insertable<Session> {
 
   /// Timestamp when session was last updated
   final DateTime updatedAt;
+
+  /// The Android package name for the app this session is tracking
+  final String appPackage;
+
+  /// Timestamp when session started (intervention began)
+  final DateTime startedAt;
+
+  /// Timestamp when session ended (intervention completed), null if still active
+  final DateTime? endedAt;
   const Session(
       {required this.id,
       required this.date,
       required this.createdAt,
-      required this.updatedAt});
+      required this.updatedAt,
+      required this.appPackage,
+      required this.startedAt,
+      this.endedAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -6147,6 +6204,11 @@ class Session extends DataClass implements Insertable<Session> {
     map['date'] = Variable<DateTime>(date);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['app_package'] = Variable<String>(appPackage);
+    map['started_at'] = Variable<DateTime>(startedAt);
+    if (!nullToAbsent || endedAt != null) {
+      map['ended_at'] = Variable<DateTime>(endedAt);
+    }
     return map;
   }
 
@@ -6156,6 +6218,11 @@ class Session extends DataClass implements Insertable<Session> {
       date: Value(date),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
+      appPackage: Value(appPackage),
+      startedAt: Value(startedAt),
+      endedAt: endedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endedAt),
     );
   }
 
@@ -6167,6 +6234,9 @@ class Session extends DataClass implements Insertable<Session> {
       date: serializer.fromJson<DateTime>(json['date']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      appPackage: serializer.fromJson<String>(json['appPackage']),
+      startedAt: serializer.fromJson<DateTime>(json['startedAt']),
+      endedAt: serializer.fromJson<DateTime?>(json['endedAt']),
     );
   }
   @override
@@ -6177,6 +6247,9 @@ class Session extends DataClass implements Insertable<Session> {
       'date': serializer.toJson<DateTime>(date),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'appPackage': serializer.toJson<String>(appPackage),
+      'startedAt': serializer.toJson<DateTime>(startedAt),
+      'endedAt': serializer.toJson<DateTime?>(endedAt),
     };
   }
 
@@ -6184,12 +6257,18 @@ class Session extends DataClass implements Insertable<Session> {
           {int? id,
           DateTime? date,
           DateTime? createdAt,
-          DateTime? updatedAt}) =>
+          DateTime? updatedAt,
+          String? appPackage,
+          DateTime? startedAt,
+          Value<DateTime?> endedAt = const Value.absent()}) =>
       Session(
         id: id ?? this.id,
         date: date ?? this.date,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
+        appPackage: appPackage ?? this.appPackage,
+        startedAt: startedAt ?? this.startedAt,
+        endedAt: endedAt.present ? endedAt.value : this.endedAt,
       );
   Session copyWithCompanion(SessionTableCompanion data) {
     return Session(
@@ -6197,6 +6276,10 @@ class Session extends DataClass implements Insertable<Session> {
       date: data.date.present ? data.date.value : this.date,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      appPackage:
+          data.appPackage.present ? data.appPackage.value : this.appPackage,
+      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
+      endedAt: data.endedAt.present ? data.endedAt.value : this.endedAt,
     );
   }
 
@@ -6206,13 +6289,17 @@ class Session extends DataClass implements Insertable<Session> {
           ..write('id: $id, ')
           ..write('date: $date, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('appPackage: $appPackage, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('endedAt: $endedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, date, createdAt, updatedAt);
+  int get hashCode => Object.hash(
+      id, date, createdAt, updatedAt, appPackage, startedAt, endedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -6220,7 +6307,10 @@ class Session extends DataClass implements Insertable<Session> {
           other.id == this.id &&
           other.date == this.date &&
           other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          other.appPackage == this.appPackage &&
+          other.startedAt == this.startedAt &&
+          other.endedAt == this.endedAt);
 }
 
 class SessionTableCompanion extends UpdateCompanion<Session> {
@@ -6228,29 +6318,44 @@ class SessionTableCompanion extends UpdateCompanion<Session> {
   final Value<DateTime> date;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
+  final Value<String> appPackage;
+  final Value<DateTime> startedAt;
+  final Value<DateTime?> endedAt;
   const SessionTableCompanion({
     this.id = const Value.absent(),
     this.date = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.appPackage = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.endedAt = const Value.absent(),
   });
   SessionTableCompanion.insert({
     this.id = const Value.absent(),
     this.date = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.appPackage = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.endedAt = const Value.absent(),
   });
   static Insertable<Session> custom({
     Expression<int>? id,
     Expression<DateTime>? date,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
+    Expression<String>? appPackage,
+    Expression<DateTime>? startedAt,
+    Expression<DateTime>? endedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (date != null) 'date': date,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (appPackage != null) 'app_package': appPackage,
+      if (startedAt != null) 'started_at': startedAt,
+      if (endedAt != null) 'ended_at': endedAt,
     });
   }
 
@@ -6258,12 +6363,18 @@ class SessionTableCompanion extends UpdateCompanion<Session> {
       {Value<int>? id,
       Value<DateTime>? date,
       Value<DateTime>? createdAt,
-      Value<DateTime>? updatedAt}) {
+      Value<DateTime>? updatedAt,
+      Value<String>? appPackage,
+      Value<DateTime>? startedAt,
+      Value<DateTime?>? endedAt}) {
     return SessionTableCompanion(
       id: id ?? this.id,
       date: date ?? this.date,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      appPackage: appPackage ?? this.appPackage,
+      startedAt: startedAt ?? this.startedAt,
+      endedAt: endedAt ?? this.endedAt,
     );
   }
 
@@ -6282,6 +6393,15 @@ class SessionTableCompanion extends UpdateCompanion<Session> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
+    if (appPackage.present) {
+      map['app_package'] = Variable<String>(appPackage.value);
+    }
+    if (startedAt.present) {
+      map['started_at'] = Variable<DateTime>(startedAt.value);
+    }
+    if (endedAt.present) {
+      map['ended_at'] = Variable<DateTime>(endedAt.value);
+    }
     return map;
   }
 
@@ -6291,7 +6411,10 @@ class SessionTableCompanion extends UpdateCompanion<Session> {
           ..write('id: $id, ')
           ..write('date: $date, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('appPackage: $appPackage, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('endedAt: $endedAt')
           ..write(')'))
         .toString();
   }
@@ -6504,6 +6627,14 @@ class $PromptDeliveryLogTableTable extends PromptDeliveryLogTable
   late final GeneratedColumn<int> sessionIdFk = GeneratedColumn<int>(
       'session_id_fk', aliasedName, false,
       type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _promptIdFkMeta =
+      const VerificationMeta('promptIdFk');
+  @override
+  late final GeneratedColumn<String> promptIdFk = GeneratedColumn<String>(
+      'prompt_id_fk', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(""));
   static const VerificationMeta _templateIdFkMeta =
       const VerificationMeta('templateIdFk');
   @override
@@ -6582,6 +6713,7 @@ class $PromptDeliveryLogTableTable extends PromptDeliveryLogTable
   List<GeneratedColumn> get $columns => [
         id,
         sessionIdFk,
+        promptIdFk,
         templateIdFk,
         outcome,
         responseContent,
@@ -6612,6 +6744,12 @@ class $PromptDeliveryLogTableTable extends PromptDeliveryLogTable
               data['session_id_fk']!, _sessionIdFkMeta));
     } else if (isInserting) {
       context.missing(_sessionIdFkMeta);
+    }
+    if (data.containsKey('prompt_id_fk')) {
+      context.handle(
+          _promptIdFkMeta,
+          promptIdFk.isAcceptableOrUnknown(
+              data['prompt_id_fk']!, _promptIdFkMeta));
     }
     if (data.containsKey('template_id_fk')) {
       context.handle(
@@ -6674,6 +6812,8 @@ class $PromptDeliveryLogTableTable extends PromptDeliveryLogTable
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       sessionIdFk: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}session_id_fk'])!,
+      promptIdFk: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}prompt_id_fk'])!,
       templateIdFk: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}template_id_fk']),
       outcome: attachedDatabase.typeMapping
@@ -6709,7 +6849,10 @@ class PromptDeliveryLog extends DataClass
   /// Foreign key to Session table
   final int sessionIdFk;
 
-  /// Foreign key to template (nullable for placeholders)
+  /// Foreign key to Prompt table (references Prompt.id)
+  final String promptIdFk;
+
+  /// Foreign key to template (nullable for placeholders, legacy)
   final int? templateIdFk;
 
   /// Outcome: 'completed' or 'abandoned'
@@ -6738,6 +6881,7 @@ class PromptDeliveryLog extends DataClass
   const PromptDeliveryLog(
       {required this.id,
       required this.sessionIdFk,
+      required this.promptIdFk,
       this.templateIdFk,
       required this.outcome,
       required this.responseContent,
@@ -6752,6 +6896,7 @@ class PromptDeliveryLog extends DataClass
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['session_id_fk'] = Variable<int>(sessionIdFk);
+    map['prompt_id_fk'] = Variable<String>(promptIdFk);
     if (!nullToAbsent || templateIdFk != null) {
       map['template_id_fk'] = Variable<int>(templateIdFk);
     }
@@ -6772,6 +6917,7 @@ class PromptDeliveryLog extends DataClass
     return PromptDeliveryLogTableCompanion(
       id: Value(id),
       sessionIdFk: Value(sessionIdFk),
+      promptIdFk: Value(promptIdFk),
       templateIdFk: templateIdFk == null && nullToAbsent
           ? const Value.absent()
           : Value(templateIdFk),
@@ -6794,6 +6940,7 @@ class PromptDeliveryLog extends DataClass
     return PromptDeliveryLog(
       id: serializer.fromJson<int>(json['id']),
       sessionIdFk: serializer.fromJson<int>(json['sessionIdFk']),
+      promptIdFk: serializer.fromJson<String>(json['promptIdFk']),
       templateIdFk: serializer.fromJson<int?>(json['templateIdFk']),
       outcome: serializer.fromJson<String>(json['outcome']),
       responseContent: serializer.fromJson<String>(json['responseContent']),
@@ -6811,6 +6958,7 @@ class PromptDeliveryLog extends DataClass
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'sessionIdFk': serializer.toJson<int>(sessionIdFk),
+      'promptIdFk': serializer.toJson<String>(promptIdFk),
       'templateIdFk': serializer.toJson<int?>(templateIdFk),
       'outcome': serializer.toJson<String>(outcome),
       'responseContent': serializer.toJson<String>(responseContent),
@@ -6826,6 +6974,7 @@ class PromptDeliveryLog extends DataClass
   PromptDeliveryLog copyWith(
           {int? id,
           int? sessionIdFk,
+          String? promptIdFk,
           Value<int?> templateIdFk = const Value.absent(),
           String? outcome,
           String? responseContent,
@@ -6838,6 +6987,7 @@ class PromptDeliveryLog extends DataClass
       PromptDeliveryLog(
         id: id ?? this.id,
         sessionIdFk: sessionIdFk ?? this.sessionIdFk,
+        promptIdFk: promptIdFk ?? this.promptIdFk,
         templateIdFk:
             templateIdFk.present ? templateIdFk.value : this.templateIdFk,
         outcome: outcome ?? this.outcome,
@@ -6854,6 +7004,8 @@ class PromptDeliveryLog extends DataClass
       id: data.id.present ? data.id.value : this.id,
       sessionIdFk:
           data.sessionIdFk.present ? data.sessionIdFk.value : this.sessionIdFk,
+      promptIdFk:
+          data.promptIdFk.present ? data.promptIdFk.value : this.promptIdFk,
       templateIdFk: data.templateIdFk.present
           ? data.templateIdFk.value
           : this.templateIdFk,
@@ -6880,6 +7032,7 @@ class PromptDeliveryLog extends DataClass
     return (StringBuffer('PromptDeliveryLog(')
           ..write('id: $id, ')
           ..write('sessionIdFk: $sessionIdFk, ')
+          ..write('promptIdFk: $promptIdFk, ')
           ..write('templateIdFk: $templateIdFk, ')
           ..write('outcome: $outcome, ')
           ..write('responseContent: $responseContent, ')
@@ -6897,6 +7050,7 @@ class PromptDeliveryLog extends DataClass
   int get hashCode => Object.hash(
       id,
       sessionIdFk,
+      promptIdFk,
       templateIdFk,
       outcome,
       responseContent,
@@ -6912,6 +7066,7 @@ class PromptDeliveryLog extends DataClass
       (other is PromptDeliveryLog &&
           other.id == this.id &&
           other.sessionIdFk == this.sessionIdFk &&
+          other.promptIdFk == this.promptIdFk &&
           other.templateIdFk == this.templateIdFk &&
           other.outcome == this.outcome &&
           other.responseContent == this.responseContent &&
@@ -6927,6 +7082,7 @@ class PromptDeliveryLogTableCompanion
     extends UpdateCompanion<PromptDeliveryLog> {
   final Value<int> id;
   final Value<int> sessionIdFk;
+  final Value<String> promptIdFk;
   final Value<int?> templateIdFk;
   final Value<String> outcome;
   final Value<String> responseContent;
@@ -6939,6 +7095,7 @@ class PromptDeliveryLogTableCompanion
   const PromptDeliveryLogTableCompanion({
     this.id = const Value.absent(),
     this.sessionIdFk = const Value.absent(),
+    this.promptIdFk = const Value.absent(),
     this.templateIdFk = const Value.absent(),
     this.outcome = const Value.absent(),
     this.responseContent = const Value.absent(),
@@ -6952,6 +7109,7 @@ class PromptDeliveryLogTableCompanion
   PromptDeliveryLogTableCompanion.insert({
     this.id = const Value.absent(),
     required int sessionIdFk,
+    this.promptIdFk = const Value.absent(),
     this.templateIdFk = const Value.absent(),
     this.outcome = const Value.absent(),
     this.responseContent = const Value.absent(),
@@ -6965,6 +7123,7 @@ class PromptDeliveryLogTableCompanion
   static Insertable<PromptDeliveryLog> custom({
     Expression<int>? id,
     Expression<int>? sessionIdFk,
+    Expression<String>? promptIdFk,
     Expression<int>? templateIdFk,
     Expression<String>? outcome,
     Expression<String>? responseContent,
@@ -6978,6 +7137,7 @@ class PromptDeliveryLogTableCompanion
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (sessionIdFk != null) 'session_id_fk': sessionIdFk,
+      if (promptIdFk != null) 'prompt_id_fk': promptIdFk,
       if (templateIdFk != null) 'template_id_fk': templateIdFk,
       if (outcome != null) 'outcome': outcome,
       if (responseContent != null) 'response_content': responseContent,
@@ -6993,6 +7153,7 @@ class PromptDeliveryLogTableCompanion
   PromptDeliveryLogTableCompanion copyWith(
       {Value<int>? id,
       Value<int>? sessionIdFk,
+      Value<String>? promptIdFk,
       Value<int?>? templateIdFk,
       Value<String>? outcome,
       Value<String>? responseContent,
@@ -7005,6 +7166,7 @@ class PromptDeliveryLogTableCompanion
     return PromptDeliveryLogTableCompanion(
       id: id ?? this.id,
       sessionIdFk: sessionIdFk ?? this.sessionIdFk,
+      promptIdFk: promptIdFk ?? this.promptIdFk,
       templateIdFk: templateIdFk ?? this.templateIdFk,
       outcome: outcome ?? this.outcome,
       responseContent: responseContent ?? this.responseContent,
@@ -7025,6 +7187,9 @@ class PromptDeliveryLogTableCompanion
     }
     if (sessionIdFk.present) {
       map['session_id_fk'] = Variable<int>(sessionIdFk.value);
+    }
+    if (promptIdFk.present) {
+      map['prompt_id_fk'] = Variable<String>(promptIdFk.value);
     }
     if (templateIdFk.present) {
       map['template_id_fk'] = Variable<int>(templateIdFk.value);
@@ -7061,6 +7226,7 @@ class PromptDeliveryLogTableCompanion
     return (StringBuffer('PromptDeliveryLogTableCompanion(')
           ..write('id: $id, ')
           ..write('sessionIdFk: $sessionIdFk, ')
+          ..write('promptIdFk: $promptIdFk, ')
           ..write('templateIdFk: $templateIdFk, ')
           ..write('outcome: $outcome, ')
           ..write('responseContent: $responseContent, ')
@@ -7070,6 +7236,519 @@ class PromptDeliveryLogTableCompanion
           ..write('startedAt: $startedAt, ')
           ..write('completedAt: $completedAt, ')
           ..write('success: $success')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PromptTableTable extends PromptTable
+    with TableInfo<$PromptTableTable, Prompt> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PromptTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  late final GeneratedColumnWithTypeConverter<InterventionArm, int> group =
+      GeneratedColumn<int>('group', aliasedName, false,
+              type: DriftSqlType.int, requiredDuringInsert: true)
+          .withConverter<InterventionArm>($PromptTableTable.$convertergroup);
+  static const VerificationMeta _levelMeta = const VerificationMeta('level');
+  @override
+  late final GeneratedColumn<int> level = GeneratedColumn<int>(
+      'level', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _promptTextMeta =
+      const VerificationMeta('promptText');
+  @override
+  late final GeneratedColumn<String> promptText = GeneratedColumn<String>(
+      'prompt_text', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _minLockSecondsMeta =
+      const VerificationMeta('minLockSeconds');
+  @override
+  late final GeneratedColumn<int> minLockSeconds = GeneratedColumn<int>(
+      'min_lock_seconds', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  late final GeneratedColumnWithTypeConverter<ExpectedInteraction, String>
+      expectedInteraction = GeneratedColumn<String>(
+              'expected_interaction', aliasedName, false,
+              type: DriftSqlType.string,
+              requiredDuringInsert: false,
+              defaultValue: const Constant('wait_out'))
+          .withConverter<ExpectedInteraction>(
+              $PromptTableTable.$converterexpectedInteraction);
+  static const VerificationMeta _activeMeta = const VerificationMeta('active');
+  @override
+  late final GeneratedColumn<bool> active = GeneratedColumn<bool>(
+      'active', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("active" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: Constant(DateTime.now()));
+  static const VerificationMeta _requiredPlaceholdersMeta =
+      const VerificationMeta('requiredPlaceholders');
+  @override
+  late final GeneratedColumn<String> requiredPlaceholders =
+      GeneratedColumn<String>('required_placeholders', aliasedName, false,
+          type: DriftSqlType.string,
+          requiredDuringInsert: false,
+          defaultValue: const Constant("[]"));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        group,
+        level,
+        promptText,
+        minLockSeconds,
+        expectedInteraction,
+        active,
+        updatedAt,
+        requiredPlaceholders
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'prompt_table';
+  @override
+  VerificationContext validateIntegrity(Insertable<Prompt> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('level')) {
+      context.handle(
+          _levelMeta, level.isAcceptableOrUnknown(data['level']!, _levelMeta));
+    } else if (isInserting) {
+      context.missing(_levelMeta);
+    }
+    if (data.containsKey('prompt_text')) {
+      context.handle(
+          _promptTextMeta,
+          promptText.isAcceptableOrUnknown(
+              data['prompt_text']!, _promptTextMeta));
+    } else if (isInserting) {
+      context.missing(_promptTextMeta);
+    }
+    if (data.containsKey('min_lock_seconds')) {
+      context.handle(
+          _minLockSecondsMeta,
+          minLockSeconds.isAcceptableOrUnknown(
+              data['min_lock_seconds']!, _minLockSecondsMeta));
+    } else if (isInserting) {
+      context.missing(_minLockSecondsMeta);
+    }
+    if (data.containsKey('active')) {
+      context.handle(_activeMeta,
+          active.isAcceptableOrUnknown(data['active']!, _activeMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('required_placeholders')) {
+      context.handle(
+          _requiredPlaceholdersMeta,
+          requiredPlaceholders.isAcceptableOrUnknown(
+              data['required_placeholders']!, _requiredPlaceholdersMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Prompt map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Prompt(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      group: $PromptTableTable.$convertergroup.fromSql(attachedDatabase
+          .typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}group'])!),
+      level: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}level'])!,
+      promptText: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}prompt_text'])!,
+      minLockSeconds: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}min_lock_seconds'])!,
+      expectedInteraction: $PromptTableTable.$converterexpectedInteraction
+          .fromSql(attachedDatabase.typeMapping.read(DriftSqlType.string,
+              data['${effectivePrefix}expected_interaction'])!),
+      active: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}active'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+      requiredPlaceholders: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}required_placeholders'])!,
+    );
+  }
+
+  @override
+  $PromptTableTable createAlias(String alias) {
+    return $PromptTableTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<InterventionArm, int, int> $convertergroup =
+      const EnumIndexConverter<InterventionArm>(InterventionArm.values);
+  static TypeConverter<ExpectedInteraction, String>
+      $converterexpectedInteraction = const ExpectedInteractionConverter();
+}
+
+class Prompt extends DataClass implements Insertable<Prompt> {
+  /// Unique string ID for prompt (e.g., "identity_1_1", "mindfulness_2_3")
+  /// Not auto-increment - IDs come from server to maintain consistency
+  final String id;
+
+  /// Intervention group/arm this prompt belongs to
+  /// Maps to InterventionArm enum (identity, mindfulness, friction, blank)
+  final InterventionArm group;
+
+  /// Level of the prompt (1 = quick, 2 = moderate, 3 = longer)
+  final int level;
+
+  /// Prompt text content (may contain placeholders like {goal_1}, {top_value_1})
+  final String promptText;
+
+  /// Minimum lock time in seconds (how long user must wait/interact)
+  final int minLockSeconds;
+
+  /// Expected interaction type for this prompt
+  final ExpectedInteraction expectedInteraction;
+
+  /// Whether this prompt is active and should be shown
+  final bool active;
+
+  /// Timestamp when prompt was last updated (for sync/versioning)
+  final DateTime updatedAt;
+
+  /// Optional: JSON array of required placeholders extracted from text
+  /// e.g., ["goal_1", "top_value_1", "best_self_description"]
+  /// This helps validate that all placeholders are available before showing prompt
+  final String requiredPlaceholders;
+  const Prompt(
+      {required this.id,
+      required this.group,
+      required this.level,
+      required this.promptText,
+      required this.minLockSeconds,
+      required this.expectedInteraction,
+      required this.active,
+      required this.updatedAt,
+      required this.requiredPlaceholders});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    {
+      map['group'] =
+          Variable<int>($PromptTableTable.$convertergroup.toSql(group));
+    }
+    map['level'] = Variable<int>(level);
+    map['prompt_text'] = Variable<String>(promptText);
+    map['min_lock_seconds'] = Variable<int>(minLockSeconds);
+    {
+      map['expected_interaction'] = Variable<String>($PromptTableTable
+          .$converterexpectedInteraction
+          .toSql(expectedInteraction));
+    }
+    map['active'] = Variable<bool>(active);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['required_placeholders'] = Variable<String>(requiredPlaceholders);
+    return map;
+  }
+
+  PromptTableCompanion toCompanion(bool nullToAbsent) {
+    return PromptTableCompanion(
+      id: Value(id),
+      group: Value(group),
+      level: Value(level),
+      promptText: Value(promptText),
+      minLockSeconds: Value(minLockSeconds),
+      expectedInteraction: Value(expectedInteraction),
+      active: Value(active),
+      updatedAt: Value(updatedAt),
+      requiredPlaceholders: Value(requiredPlaceholders),
+    );
+  }
+
+  factory Prompt.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Prompt(
+      id: serializer.fromJson<String>(json['id']),
+      group: $PromptTableTable.$convertergroup
+          .fromJson(serializer.fromJson<int>(json['group'])),
+      level: serializer.fromJson<int>(json['level']),
+      promptText: serializer.fromJson<String>(json['promptText']),
+      minLockSeconds: serializer.fromJson<int>(json['minLockSeconds']),
+      expectedInteraction:
+          serializer.fromJson<ExpectedInteraction>(json['expectedInteraction']),
+      active: serializer.fromJson<bool>(json['active']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      requiredPlaceholders:
+          serializer.fromJson<String>(json['requiredPlaceholders']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'group': serializer
+          .toJson<int>($PromptTableTable.$convertergroup.toJson(group)),
+      'level': serializer.toJson<int>(level),
+      'promptText': serializer.toJson<String>(promptText),
+      'minLockSeconds': serializer.toJson<int>(minLockSeconds),
+      'expectedInteraction':
+          serializer.toJson<ExpectedInteraction>(expectedInteraction),
+      'active': serializer.toJson<bool>(active),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'requiredPlaceholders': serializer.toJson<String>(requiredPlaceholders),
+    };
+  }
+
+  Prompt copyWith(
+          {String? id,
+          InterventionArm? group,
+          int? level,
+          String? promptText,
+          int? minLockSeconds,
+          ExpectedInteraction? expectedInteraction,
+          bool? active,
+          DateTime? updatedAt,
+          String? requiredPlaceholders}) =>
+      Prompt(
+        id: id ?? this.id,
+        group: group ?? this.group,
+        level: level ?? this.level,
+        promptText: promptText ?? this.promptText,
+        minLockSeconds: minLockSeconds ?? this.minLockSeconds,
+        expectedInteraction: expectedInteraction ?? this.expectedInteraction,
+        active: active ?? this.active,
+        updatedAt: updatedAt ?? this.updatedAt,
+        requiredPlaceholders: requiredPlaceholders ?? this.requiredPlaceholders,
+      );
+  Prompt copyWithCompanion(PromptTableCompanion data) {
+    return Prompt(
+      id: data.id.present ? data.id.value : this.id,
+      group: data.group.present ? data.group.value : this.group,
+      level: data.level.present ? data.level.value : this.level,
+      promptText:
+          data.promptText.present ? data.promptText.value : this.promptText,
+      minLockSeconds: data.minLockSeconds.present
+          ? data.minLockSeconds.value
+          : this.minLockSeconds,
+      expectedInteraction: data.expectedInteraction.present
+          ? data.expectedInteraction.value
+          : this.expectedInteraction,
+      active: data.active.present ? data.active.value : this.active,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      requiredPlaceholders: data.requiredPlaceholders.present
+          ? data.requiredPlaceholders.value
+          : this.requiredPlaceholders,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Prompt(')
+          ..write('id: $id, ')
+          ..write('group: $group, ')
+          ..write('level: $level, ')
+          ..write('promptText: $promptText, ')
+          ..write('minLockSeconds: $minLockSeconds, ')
+          ..write('expectedInteraction: $expectedInteraction, ')
+          ..write('active: $active, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('requiredPlaceholders: $requiredPlaceholders')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, group, level, promptText, minLockSeconds,
+      expectedInteraction, active, updatedAt, requiredPlaceholders);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Prompt &&
+          other.id == this.id &&
+          other.group == this.group &&
+          other.level == this.level &&
+          other.promptText == this.promptText &&
+          other.minLockSeconds == this.minLockSeconds &&
+          other.expectedInteraction == this.expectedInteraction &&
+          other.active == this.active &&
+          other.updatedAt == this.updatedAt &&
+          other.requiredPlaceholders == this.requiredPlaceholders);
+}
+
+class PromptTableCompanion extends UpdateCompanion<Prompt> {
+  final Value<String> id;
+  final Value<InterventionArm> group;
+  final Value<int> level;
+  final Value<String> promptText;
+  final Value<int> minLockSeconds;
+  final Value<ExpectedInteraction> expectedInteraction;
+  final Value<bool> active;
+  final Value<DateTime> updatedAt;
+  final Value<String> requiredPlaceholders;
+  final Value<int> rowid;
+  const PromptTableCompanion({
+    this.id = const Value.absent(),
+    this.group = const Value.absent(),
+    this.level = const Value.absent(),
+    this.promptText = const Value.absent(),
+    this.minLockSeconds = const Value.absent(),
+    this.expectedInteraction = const Value.absent(),
+    this.active = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.requiredPlaceholders = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PromptTableCompanion.insert({
+    required String id,
+    required InterventionArm group,
+    required int level,
+    required String promptText,
+    required int minLockSeconds,
+    this.expectedInteraction = const Value.absent(),
+    this.active = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.requiredPlaceholders = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        group = Value(group),
+        level = Value(level),
+        promptText = Value(promptText),
+        minLockSeconds = Value(minLockSeconds);
+  static Insertable<Prompt> custom({
+    Expression<String>? id,
+    Expression<int>? group,
+    Expression<int>? level,
+    Expression<String>? promptText,
+    Expression<int>? minLockSeconds,
+    Expression<String>? expectedInteraction,
+    Expression<bool>? active,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? requiredPlaceholders,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (group != null) 'group': group,
+      if (level != null) 'level': level,
+      if (promptText != null) 'prompt_text': promptText,
+      if (minLockSeconds != null) 'min_lock_seconds': minLockSeconds,
+      if (expectedInteraction != null)
+        'expected_interaction': expectedInteraction,
+      if (active != null) 'active': active,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (requiredPlaceholders != null)
+        'required_placeholders': requiredPlaceholders,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PromptTableCompanion copyWith(
+      {Value<String>? id,
+      Value<InterventionArm>? group,
+      Value<int>? level,
+      Value<String>? promptText,
+      Value<int>? minLockSeconds,
+      Value<ExpectedInteraction>? expectedInteraction,
+      Value<bool>? active,
+      Value<DateTime>? updatedAt,
+      Value<String>? requiredPlaceholders,
+      Value<int>? rowid}) {
+    return PromptTableCompanion(
+      id: id ?? this.id,
+      group: group ?? this.group,
+      level: level ?? this.level,
+      promptText: promptText ?? this.promptText,
+      minLockSeconds: minLockSeconds ?? this.minLockSeconds,
+      expectedInteraction: expectedInteraction ?? this.expectedInteraction,
+      active: active ?? this.active,
+      updatedAt: updatedAt ?? this.updatedAt,
+      requiredPlaceholders: requiredPlaceholders ?? this.requiredPlaceholders,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (group.present) {
+      map['group'] =
+          Variable<int>($PromptTableTable.$convertergroup.toSql(group.value));
+    }
+    if (level.present) {
+      map['level'] = Variable<int>(level.value);
+    }
+    if (promptText.present) {
+      map['prompt_text'] = Variable<String>(promptText.value);
+    }
+    if (minLockSeconds.present) {
+      map['min_lock_seconds'] = Variable<int>(minLockSeconds.value);
+    }
+    if (expectedInteraction.present) {
+      map['expected_interaction'] = Variable<String>($PromptTableTable
+          .$converterexpectedInteraction
+          .toSql(expectedInteraction.value));
+    }
+    if (active.present) {
+      map['active'] = Variable<bool>(active.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (requiredPlaceholders.present) {
+      map['required_placeholders'] =
+          Variable<String>(requiredPlaceholders.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PromptTableCompanion(')
+          ..write('id: $id, ')
+          ..write('group: $group, ')
+          ..write('level: $level, ')
+          ..write('promptText: $promptText, ')
+          ..write('minLockSeconds: $minLockSeconds, ')
+          ..write('expectedInteraction: $expectedInteraction, ')
+          ..write('active: $active, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('requiredPlaceholders: $requiredPlaceholders, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -7107,6 +7786,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $StudyConfigTableTable(this);
   late final $PromptDeliveryLogTableTable promptDeliveryLogTable =
       $PromptDeliveryLogTableTable(this);
+  late final $PromptTableTable promptTable = $PromptTableTable(this);
   late final UniqueRecordsDao uniqueRecordsDao =
       UniqueRecordsDao(this as AppDatabase);
   late final DynamicRecordsDao dynamicRecordsDao =
@@ -7132,7 +7812,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         notificationsTable,
         sessionTable,
         studyConfigTable,
-        promptDeliveryLogTable
+        promptDeliveryLogTable,
+        promptTable
       ];
 }
 
@@ -10100,6 +10781,9 @@ typedef $$SessionTableTableCreateCompanionBuilder = SessionTableCompanion
   Value<DateTime> date,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
+  Value<String> appPackage,
+  Value<DateTime> startedAt,
+  Value<DateTime?> endedAt,
 });
 typedef $$SessionTableTableUpdateCompanionBuilder = SessionTableCompanion
     Function({
@@ -10107,6 +10791,9 @@ typedef $$SessionTableTableUpdateCompanionBuilder = SessionTableCompanion
   Value<DateTime> date,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
+  Value<String> appPackage,
+  Value<DateTime> startedAt,
+  Value<DateTime?> endedAt,
 });
 
 class $$SessionTableTableFilterComposer
@@ -10129,6 +10816,15 @@ class $$SessionTableTableFilterComposer
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get appPackage => $composableBuilder(
+      column: $table.appPackage, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get startedAt => $composableBuilder(
+      column: $table.startedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get endedAt => $composableBuilder(
+      column: $table.endedAt, builder: (column) => ColumnFilters(column));
 }
 
 class $$SessionTableTableOrderingComposer
@@ -10151,6 +10847,15 @@ class $$SessionTableTableOrderingComposer
 
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get appPackage => $composableBuilder(
+      column: $table.appPackage, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get startedAt => $composableBuilder(
+      column: $table.startedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get endedAt => $composableBuilder(
+      column: $table.endedAt, builder: (column) => ColumnOrderings(column));
 }
 
 class $$SessionTableTableAnnotationComposer
@@ -10173,6 +10878,15 @@ class $$SessionTableTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get appPackage => $composableBuilder(
+      column: $table.appPackage, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get startedAt =>
+      $composableBuilder(column: $table.startedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get endedAt =>
+      $composableBuilder(column: $table.endedAt, builder: (column) => column);
 }
 
 class $$SessionTableTableTableManager extends RootTableManager<
@@ -10202,24 +10916,36 @@ class $$SessionTableTableTableManager extends RootTableManager<
             Value<DateTime> date = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
+            Value<String> appPackage = const Value.absent(),
+            Value<DateTime> startedAt = const Value.absent(),
+            Value<DateTime?> endedAt = const Value.absent(),
           }) =>
               SessionTableCompanion(
             id: id,
             date: date,
             createdAt: createdAt,
             updatedAt: updatedAt,
+            appPackage: appPackage,
+            startedAt: startedAt,
+            endedAt: endedAt,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<DateTime> date = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
+            Value<String> appPackage = const Value.absent(),
+            Value<DateTime> startedAt = const Value.absent(),
+            Value<DateTime?> endedAt = const Value.absent(),
           }) =>
               SessionTableCompanion.insert(
             id: id,
             date: date,
             createdAt: createdAt,
             updatedAt: updatedAt,
+            appPackage: appPackage,
+            startedAt: startedAt,
+            endedAt: endedAt,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -10367,6 +11093,7 @@ typedef $$PromptDeliveryLogTableTableCreateCompanionBuilder
     = PromptDeliveryLogTableCompanion Function({
   Value<int> id,
   required int sessionIdFk,
+  Value<String> promptIdFk,
   Value<int?> templateIdFk,
   Value<String> outcome,
   Value<String> responseContent,
@@ -10381,6 +11108,7 @@ typedef $$PromptDeliveryLogTableTableUpdateCompanionBuilder
     = PromptDeliveryLogTableCompanion Function({
   Value<int> id,
   Value<int> sessionIdFk,
+  Value<String> promptIdFk,
   Value<int?> templateIdFk,
   Value<String> outcome,
   Value<String> responseContent,
@@ -10406,6 +11134,9 @@ class $$PromptDeliveryLogTableTableFilterComposer
 
   ColumnFilters<int> get sessionIdFk => $composableBuilder(
       column: $table.sessionIdFk, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get promptIdFk => $composableBuilder(
+      column: $table.promptIdFk, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get templateIdFk => $composableBuilder(
       column: $table.templateIdFk, builder: (column) => ColumnFilters(column));
@@ -10450,6 +11181,9 @@ class $$PromptDeliveryLogTableTableOrderingComposer
 
   ColumnOrderings<int> get sessionIdFk => $composableBuilder(
       column: $table.sessionIdFk, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get promptIdFk => $composableBuilder(
+      column: $table.promptIdFk, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<int> get templateIdFk => $composableBuilder(
       column: $table.templateIdFk,
@@ -10496,6 +11230,9 @@ class $$PromptDeliveryLogTableTableAnnotationComposer
 
   GeneratedColumn<int> get sessionIdFk => $composableBuilder(
       column: $table.sessionIdFk, builder: (column) => column);
+
+  GeneratedColumn<String> get promptIdFk => $composableBuilder(
+      column: $table.promptIdFk, builder: (column) => column);
 
   GeneratedColumn<int> get templateIdFk => $composableBuilder(
       column: $table.templateIdFk, builder: (column) => column);
@@ -10558,6 +11295,7 @@ class $$PromptDeliveryLogTableTableTableManager extends RootTableManager<
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<int> sessionIdFk = const Value.absent(),
+            Value<String> promptIdFk = const Value.absent(),
             Value<int?> templateIdFk = const Value.absent(),
             Value<String> outcome = const Value.absent(),
             Value<String> responseContent = const Value.absent(),
@@ -10571,6 +11309,7 @@ class $$PromptDeliveryLogTableTableTableManager extends RootTableManager<
               PromptDeliveryLogTableCompanion(
             id: id,
             sessionIdFk: sessionIdFk,
+            promptIdFk: promptIdFk,
             templateIdFk: templateIdFk,
             outcome: outcome,
             responseContent: responseContent,
@@ -10584,6 +11323,7 @@ class $$PromptDeliveryLogTableTableTableManager extends RootTableManager<
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required int sessionIdFk,
+            Value<String> promptIdFk = const Value.absent(),
             Value<int?> templateIdFk = const Value.absent(),
             Value<String> outcome = const Value.absent(),
             Value<String> responseContent = const Value.absent(),
@@ -10597,6 +11337,7 @@ class $$PromptDeliveryLogTableTableTableManager extends RootTableManager<
               PromptDeliveryLogTableCompanion.insert(
             id: id,
             sessionIdFk: sessionIdFk,
+            promptIdFk: promptIdFk,
             templateIdFk: templateIdFk,
             outcome: outcome,
             responseContent: responseContent,
@@ -10631,6 +11372,246 @@ typedef $$PromptDeliveryLogTableTableProcessedTableManager
         ),
         PromptDeliveryLog,
         PrefetchHooks Function()>;
+typedef $$PromptTableTableCreateCompanionBuilder = PromptTableCompanion
+    Function({
+  required String id,
+  required InterventionArm group,
+  required int level,
+  required String promptText,
+  required int minLockSeconds,
+  Value<ExpectedInteraction> expectedInteraction,
+  Value<bool> active,
+  Value<DateTime> updatedAt,
+  Value<String> requiredPlaceholders,
+  Value<int> rowid,
+});
+typedef $$PromptTableTableUpdateCompanionBuilder = PromptTableCompanion
+    Function({
+  Value<String> id,
+  Value<InterventionArm> group,
+  Value<int> level,
+  Value<String> promptText,
+  Value<int> minLockSeconds,
+  Value<ExpectedInteraction> expectedInteraction,
+  Value<bool> active,
+  Value<DateTime> updatedAt,
+  Value<String> requiredPlaceholders,
+  Value<int> rowid,
+});
+
+class $$PromptTableTableFilterComposer
+    extends Composer<_$AppDatabase, $PromptTableTable> {
+  $$PromptTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnWithTypeConverterFilters<InterventionArm, InterventionArm, int>
+      get group => $composableBuilder(
+          column: $table.group,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnFilters<int> get level => $composableBuilder(
+      column: $table.level, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get promptText => $composableBuilder(
+      column: $table.promptText, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get minLockSeconds => $composableBuilder(
+      column: $table.minLockSeconds,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnWithTypeConverterFilters<ExpectedInteraction, ExpectedInteraction,
+          String>
+      get expectedInteraction => $composableBuilder(
+          column: $table.expectedInteraction,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnFilters<bool> get active => $composableBuilder(
+      column: $table.active, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get requiredPlaceholders => $composableBuilder(
+      column: $table.requiredPlaceholders,
+      builder: (column) => ColumnFilters(column));
+}
+
+class $$PromptTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $PromptTableTable> {
+  $$PromptTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get group => $composableBuilder(
+      column: $table.group, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get level => $composableBuilder(
+      column: $table.level, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get promptText => $composableBuilder(
+      column: $table.promptText, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get minLockSeconds => $composableBuilder(
+      column: $table.minLockSeconds,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get expectedInteraction => $composableBuilder(
+      column: $table.expectedInteraction,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get active => $composableBuilder(
+      column: $table.active, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get requiredPlaceholders => $composableBuilder(
+      column: $table.requiredPlaceholders,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$PromptTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PromptTableTable> {
+  $$PromptTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<InterventionArm, int> get group =>
+      $composableBuilder(column: $table.group, builder: (column) => column);
+
+  GeneratedColumn<int> get level =>
+      $composableBuilder(column: $table.level, builder: (column) => column);
+
+  GeneratedColumn<String> get promptText => $composableBuilder(
+      column: $table.promptText, builder: (column) => column);
+
+  GeneratedColumn<int> get minLockSeconds => $composableBuilder(
+      column: $table.minLockSeconds, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<ExpectedInteraction, String>
+      get expectedInteraction => $composableBuilder(
+          column: $table.expectedInteraction, builder: (column) => column);
+
+  GeneratedColumn<bool> get active =>
+      $composableBuilder(column: $table.active, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get requiredPlaceholders => $composableBuilder(
+      column: $table.requiredPlaceholders, builder: (column) => column);
+}
+
+class $$PromptTableTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $PromptTableTable,
+    Prompt,
+    $$PromptTableTableFilterComposer,
+    $$PromptTableTableOrderingComposer,
+    $$PromptTableTableAnnotationComposer,
+    $$PromptTableTableCreateCompanionBuilder,
+    $$PromptTableTableUpdateCompanionBuilder,
+    (Prompt, BaseReferences<_$AppDatabase, $PromptTableTable, Prompt>),
+    Prompt,
+    PrefetchHooks Function()> {
+  $$PromptTableTableTableManager(_$AppDatabase db, $PromptTableTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PromptTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PromptTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PromptTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<InterventionArm> group = const Value.absent(),
+            Value<int> level = const Value.absent(),
+            Value<String> promptText = const Value.absent(),
+            Value<int> minLockSeconds = const Value.absent(),
+            Value<ExpectedInteraction> expectedInteraction =
+                const Value.absent(),
+            Value<bool> active = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<String> requiredPlaceholders = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              PromptTableCompanion(
+            id: id,
+            group: group,
+            level: level,
+            promptText: promptText,
+            minLockSeconds: minLockSeconds,
+            expectedInteraction: expectedInteraction,
+            active: active,
+            updatedAt: updatedAt,
+            requiredPlaceholders: requiredPlaceholders,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required InterventionArm group,
+            required int level,
+            required String promptText,
+            required int minLockSeconds,
+            Value<ExpectedInteraction> expectedInteraction =
+                const Value.absent(),
+            Value<bool> active = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<String> requiredPlaceholders = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              PromptTableCompanion.insert(
+            id: id,
+            group: group,
+            level: level,
+            promptText: promptText,
+            minLockSeconds: minLockSeconds,
+            expectedInteraction: expectedInteraction,
+            active: active,
+            updatedAt: updatedAt,
+            requiredPlaceholders: requiredPlaceholders,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$PromptTableTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $PromptTableTable,
+    Prompt,
+    $$PromptTableTableFilterComposer,
+    $$PromptTableTableOrderingComposer,
+    $$PromptTableTableAnnotationComposer,
+    $$PromptTableTableCreateCompanionBuilder,
+    $$PromptTableTableUpdateCompanionBuilder,
+    (Prompt, BaseReferences<_$AppDatabase, $PromptTableTable, Prompt>),
+    Prompt,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -10672,4 +11653,6 @@ class $AppDatabaseManager {
   $$PromptDeliveryLogTableTableTableManager get promptDeliveryLogTable =>
       $$PromptDeliveryLogTableTableTableManager(
           _db, _db.promptDeliveryLogTable);
+  $$PromptTableTableTableManager get promptTable =>
+      $$PromptTableTableTableManager(_db, _db.promptTable);
 }

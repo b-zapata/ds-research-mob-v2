@@ -13,6 +13,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindful/core/database/app_database.dart';
 import 'package:mindful/core/enums/app_theme_mode.dart';
 import 'package:mindful/core/enums/default_home_tab.dart';
+import 'package:mindful/core/enums/intervention_arm.dart';
+import 'package:mindful/intervention/data/participant_repo.dart';
 import 'package:mindful/core/extensions/ext_date_time.dart';
 import 'package:mindful/core/services/drift_db_service.dart';
 import 'package:mindful/core/services/method_channel_service.dart';
@@ -120,4 +122,13 @@ class MindfulSettingsNotifier extends StateNotifier<MindfulSettings> {
   void updateAppVersion() => state = state.copyWith(
         appVersion: MethodChannelService.instance.deviceInfo.mindfulVersion,
       );
+
+  /// Changes the intervention arm (blank|mindfulness|friction|identity)
+  void changeInterventionArm(InterventionArm arm) async {
+    state = state.copyWith(interventionArm: arm);
+    
+    // Sync to SharedPreferences via ParticipantRepo
+    final participantRepo = ParticipantRepo(DriftDbService.instance.driftDb);
+    await participantRepo.updateArm(arm);
+  }
 }

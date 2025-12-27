@@ -19,8 +19,12 @@ import 'package:mindful/core/database/tables/crash_logs_table.dart';
 import 'package:mindful/core/database/tables/focus_profile_table.dart';
 import 'package:mindful/core/database/tables/focus_sessions_table.dart';
 import 'package:mindful/core/database/tables/notifications_table.dart';
+import 'package:mindful/core/database/tables/prompt_table.dart';
+import 'package:mindful/core/database/tables/prompt_delivery_log_table.dart';
 import 'package:mindful/core/database/tables/restriction_groups_table.dart';
+import 'package:mindful/core/database/tables/session_table.dart';
 import 'package:mindful/core/database/adapters/time_of_day_adapter.dart';
+import 'package:mindful/core/enums/intervention_arm.dart';
 import 'package:mindful/core/enums/session_state.dart';
 import 'package:mindful/core/enums/session_type.dart';
 import 'package:mindful/core/extensions/ext_date_time.dart';
@@ -39,6 +43,9 @@ part 'dynamic_records_dao.g.dart';
     RestrictionGroupsTable,
     AppUsageTable,
     NotificationsTable,
+    PromptTable,
+    SessionTable,
+    PromptDeliveryLogTable,
   ],
 )
 class DynamicRecordsDao extends DatabaseAccessor<AppDatabase>
@@ -502,4 +509,193 @@ class DynamicRecordsDao extends DatabaseAccessor<AppDatabase>
           (tbl) => tbl.timeStamp.isSmallerThanValue(date),
         ),
       );
+
+  // ==================================================================================================================
+  // ===================================== PROMPTS =======================================================
+  // ==================================================================================================================
+
+  /// Get all active prompts for a specific intervention group/arm
+  Future<List<Prompt>> getActivePromptsByGroup(int groupIndex) async {
+    return await (select(promptTable)
+          ..where((tbl) => tbl.group.equals(groupIndex) & tbl.active.equals(true))
+          ..orderBy([(tbl) => OrderingTerm.asc(tbl.level), (tbl) => OrderingTerm.asc(tbl.id)]))
+        .get();
+  }
+
+  /// Get all active prompts for a specific group and level
+  Future<List<Prompt>> getActivePromptsByGroupAndLevel({
+    required int groupIndex,
+    required int level,
+  }) async {
+    return await (select(promptTable)
+          ..where((tbl) =>
+              tbl.group.equals(groupIndex) &
+              tbl.level.equals(level) &
+              tbl.active.equals(true))
+          ..orderBy([(tbl) => OrderingTerm.asc(tbl.id)]))
+        .get();
+  }
+
+  /// Get a specific prompt by ID
+  Future<Prompt?> getPromptById(String promptId) async {
+    return await (select(promptTable)
+          ..where((tbl) => tbl.id.equals(promptId)))
+        .getSingleOrNull();
+  }
+
+  /// Insert or replace a single prompt (for sync)
+  Future<void> upsertPrompt(Prompt prompt) async {
+    await into(promptTable).insert(prompt, mode: InsertMode.insertOrReplace);
+  }
+
+  /// Insert or replace multiple prompts (for batch sync)
+  Future<void> upsertPrompts(List<Prompt> prompts) async {
+    await batch((batch) {
+      for (final prompt in prompts) {
+        batch.insert(promptTable, prompt, mode: InsertMode.insertOrReplace);
+      }
+    });
+  }
+
+  /// Delete all prompts for a specific group (for resync when arm changes)
+  Future<void> deletePromptsByGroup(int groupIndex) async {
+    await (delete(promptTable)
+          ..where((tbl) => tbl.group.equals(groupIndex)))
+        .go();
+  }
+
+  /// Delete a specific prompt by ID
+  Future<void> deletePromptById(String promptId) async {
+    await (delete(promptTable)..where((tbl) => tbl.id.equals(promptId))).go();
+  }
+
+  /// Check if prompts exist for a specific group
+  Future<bool> hasPromptsForGroup(int groupIndex) async {
+    final query = selectOnly(promptTable)
+      ..addColumns([promptTable.id.count()])
+      ..where(promptTable.group.equals(groupIndex));
+    final result = await query.getSingle();
+    return (result.read(promptTable.id.count()) ?? 0) > 0;
+  }
+
+  // ==================================================================================================================
+  // ===================================== SESSIONS =================================================================
+  // ==================================================================================================================
+
+  /// Create a new Session for an intervention episode
+  Future<Session> createSession({
+    required String appPackage,
+  }) async {
+    final now = DateTime.now();
+    return await into(sessionTable).insertReturning(
+      SessionTableCompanion.insert(
+        date: Value(now.dateOnly),
+        appPackage: Value(appPackage),
+        startedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Update Session.endedAt when intervention completes
+  Future<void> updateSessionEndedAt({
+    required int sessionId,
+    required DateTime endedAt,
+  }) async {
+    await (update(sessionTable)..where((tbl) => tbl.id.equals(sessionId)))
+        .write(SessionTableCompanion(endedAt: Value(endedAt)));
+  }
+
+  /// Get Session by ID
+  Future<Session?> getSessionById(int sessionId) async {
+    return await (select(sessionTable)..where((tbl) => tbl.id.equals(sessionId)))
+        .getSingleOrNull();
+  }
+
+  // ==================================================================================================================
+  // ===================================== PROMPT DELIVERY LOG ======================================================
+  // ==================================================================================================================
+
+  /// Create a new PromptDeliveryLog entry
+  Future<PromptDeliveryLog> createPromptDeliveryLog({
+    required int sessionId,
+    required String promptId,
+    required String appPackage,
+    String triggerType = 'launch',
+  }) async {
+    final now = DateTime.now();
+    return await into(promptDeliveryLogTable).insertReturning(
+      PromptDeliveryLogTableCompanion.insert(
+        sessionIdFk: sessionId,
+        promptIdFk: Value(promptId),
+        appPackage: Value(appPackage),
+        triggerType: Value(triggerType),
+        startedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Update PromptDeliveryLog when intervention completes
+  Future<void> updatePromptDeliveryLogCompletion({
+    required int promptDeliveryLogId,
+    required bool success,
+    required String outcome,
+    required int secondsSpent,
+    required String responseContent,
+    DateTime? completedAt,
+  }) async {
+    await (update(promptDeliveryLogTable)
+          ..where((tbl) => tbl.id.equals(promptDeliveryLogId)))
+        .write(
+      PromptDeliveryLogTableCompanion(
+        success: Value(success),
+        outcome: Value(outcome),
+        secondsSpent: Value(secondsSpent),
+        responseContent: Value(responseContent),
+        completedAt: Value(completedAt ?? DateTime.now()),
+      ),
+    );
+  }
+
+  /// Get all prompt IDs that have been shown to a participant for a specific (arm, level)
+  /// This is used for random without replacement selection
+  Future<Set<String>> getShownPromptIds({
+    required int participantId, // From MindfulSettingsTable.id
+    required InterventionArm arm,
+    required int level,
+  }) async {
+    // Join PromptDeliveryLog with Prompt to filter by arm and level
+    // Then get distinct prompt IDs
+    final query = selectOnly(promptDeliveryLogTable)
+      ..addColumns([promptDeliveryLogTable.promptIdFk])
+      ..join([
+        innerJoin(
+          promptTable,
+          promptTable.id.equalsExp(promptDeliveryLogTable.promptIdFk),
+        ),
+      ])
+      ..where(
+        promptTable.group.equals(arm.index) &
+            promptTable.level.equals(level),
+      );
+
+    final results = await query.get();
+    return results
+        .map((row) => row.read(promptDeliveryLogTable.promptIdFk) ?? '')
+        .where((id) => id.isNotEmpty)
+        .toSet();
+  }
+
+  /// Get PromptDeliveryLog by ID
+  Future<PromptDeliveryLog?> getPromptDeliveryLogById(int id) async {
+    return await (select(promptDeliveryLogTable)
+          ..where((tbl) => tbl.id.equals(id)))
+        .getSingleOrNull();
+  }
+
+  /// Get all PromptDeliveryLogs, ordered by most recent first
+  Future<List<PromptDeliveryLog>> getAllPromptDeliveryLogs() async {
+    return await (select(promptDeliveryLogTable)
+          ..orderBy([(tbl) => OrderingTerm.desc(tbl.startedAt)]))
+        .get();
+  }
 }

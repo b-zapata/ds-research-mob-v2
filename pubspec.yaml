@@ -84,6 +84,7 @@ flutter:
 
     # Intervention config
     - assets/intervention_config.json
+    - assets/prompt_library.json
 
   # fonts:
   #   - family: Schyler

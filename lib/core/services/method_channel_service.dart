@@ -15,6 +15,8 @@ import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:mindful/core/database/app_database.dart';
+import 'package:mindful/core/services/drift_db_service.dart';
+import 'package:mindful/intervention/services/intervention_service.dart';
 import 'package:mindful/models/usage_model.dart';
 import 'package:mindful/models/app_info.dart';
 import 'package:mindful/models/device_info_model.dart';
@@ -48,7 +50,66 @@ class MethodChannelService {
       (call) async {
         if (call.method == "updateSelfStartStatus") {
           _isSelfRestart = call.arguments as bool? ?? false;
+          return null;
+        } else if (call.method == "getPromptForIntervention") {
+          // Handle prompt request from Android
+          final args = call.arguments as Map<dynamic, dynamic>? ?? {};
+          final level = args['level'] as int? ?? 1;
+          final appPackage = args['appPackage'] as String? ?? '';
+
+          if (appPackage.isEmpty) {
+            throw PlatformException(
+              code: 'ERROR',
+              message: 'Missing appPackage parameter',
+            );
+          }
+
+          final interventionService = InterventionService(
+            DriftDbService.instance.driftDb,
+          );
+          final promptResult = await interventionService.getPromptForIntervention(
+            level: level,
+            appPackage: appPackage,
+          );
+          if (promptResult != null) {
+            return promptResult;
+          } else {
+            throw PlatformException(
+              code: 'ERROR',
+              message: 'No prompt available',
+            );
+          }
+        } else if (call.method == "reportInterventionCompleted") {
+          // Handle intervention completion from Android
+          final args = call.arguments as Map<dynamic, dynamic>? ?? {};
+          final sessionId = args['sessionId'] as int?;
+          final promptDeliveryLogId = args['promptDeliveryLogId'] as int?;
+          final success = args['success'] as bool? ?? false;
+          final outcome = args['outcome'] as String? ?? 'abandoned';
+          final secondsSpent = args['secondsSpent'] as int? ?? 0;
+          final responseContent = args['responseContent'] as String? ?? '';
+
+          if (sessionId == null || promptDeliveryLogId == null) {
+            throw PlatformException(
+              code: 'ERROR',
+              message: 'Missing required parameters',
+            );
+          }
+
+          final interventionService = InterventionService(
+            DriftDbService.instance.driftDb,
+          );
+          await interventionService.reportInterventionCompleted(
+            sessionId: sessionId,
+            promptDeliveryLogId: promptDeliveryLogId,
+            success: success,
+            outcome: outcome,
+            secondsSpent: secondsSpent,
+            responseContent: responseContent,
+          );
+          return true;
         }
+        return null;
       },
     );
 

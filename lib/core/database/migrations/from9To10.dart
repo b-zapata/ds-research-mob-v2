@@ -12,6 +12,12 @@ Future<void> from9To10(Migrator m, Schema10 schema) async => await runSafe(
         final mindfulSettings = schema.mindfulSettingsTable as Shape27;
         await m.addColumn(mindfulSettings, mindfulSettings.interventionArm);
 
+        /// Set default value for existing rows (0 = blank)
+        /// This ensures existing records have a valid value
+        await m.database.customStatement(
+          'UPDATE mindful_settings_table SET intervention_arm = 0 WHERE intervention_arm IS NULL',
+        );
+
         /// Create new intervention-related tables
         /// Note: SessionTable, StudyConfigTable, PromptDeliveryLogTable are new
         /// They are created automatically by drift, no manual ALTER needed

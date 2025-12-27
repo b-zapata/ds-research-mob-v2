@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import com.mindful.android.helpers.FlutterMethodChannelHelper
 import com.mindful.android.helpers.storage.SharedPrefsHelper
 import org.json.JSONObject
 import java.util.concurrent.Executors
@@ -35,8 +36,14 @@ class InterventionManager(
 
     private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     private var retriggerHandle: ScheduledFuture<*>? = null
+    private val severityCalculator = SeverityCalculator(context)
 
     @Volatile private var currentForegroundPackage: String = ""
+    
+    // Track current intervention state
+    private var currentSessionId: Int? = null
+    private var currentPromptDeliveryLogId: Int? = null
+    private var interventionStartTime: Long = 0
 
     private data class Config(
         val flaggedPackages: Set<String>,
@@ -94,16 +101,119 @@ class InterventionManager(
             return
         }
 
-        val arm = readArm()
-        Log.d(TAG, "Triggering intervention for $packageName arm=$arm")
+        // Calculate severity level
+        val level = severityCalculator.calculateSeverityLevel(packageName)
+        Log.d(TAG, "Triggering intervention for $packageName level=$level")
 
-        // Show overlay immediately (launch)
-        overlayManager.showInterventionOverlay(packageName = packageName, arm = arm) {
-            // Continue pressed – nothing else to do here
-        }
+        // Call Flutter to get prompt
+        triggerIntervention(packageName, level, "launch")
 
         // Schedule retrigger if remains foreground
-        scheduleRetrigger(minutes = cfg.retriggerMinutes, packageName = packageName, arm = arm)
+        scheduleRetrigger(minutes = cfg.retriggerMinutes, packageName = packageName, level = level)
+    }
+    
+    /**
+     * Trigger intervention by calling Flutter for prompt and displaying overlay
+     */
+    private fun triggerIntervention(packageName: String, level: Int, triggerType: String) {
+        // Call Flutter to get prompt
+        val args = mapOf(
+            "level" to level,
+            "appPackage" to packageName
+        )
+        
+        val promptResult = FlutterMethodChannelHelper.invokeMethod("getPromptForIntervention", args)
+        
+        if (promptResult == null) {
+            Log.w(TAG, "Failed to get prompt from Flutter, showing placeholder")
+            val arm = readArm()
+            Handler(Looper.getMainLooper()).post {
+                overlayManager.showInterventionOverlay(packageName = packageName, arm = arm) {
+                    // Continue pressed
+                }
+            }
+            return
+        }
+
+        // Extract prompt data
+        val sessionId = (promptResult["sessionId"] as? Number)?.toInt()
+        val promptDeliveryLogId = (promptResult["promptDeliveryLogId"] as? Number)?.toInt()
+        val promptId = promptResult["promptId"] as? String ?: ""
+        val promptText = promptResult["text"] as? String ?: ""
+        val expectedInteraction = promptResult["expectedInteraction"] as? String ?: "wait_out"
+        val minLockSeconds = (promptResult["minLockSeconds"] as? Number)?.toInt() ?: 5
+
+        // Store for completion callback
+        currentSessionId = sessionId
+        currentPromptDeliveryLogId = promptDeliveryLogId
+        interventionStartTime = System.currentTimeMillis()
+
+        Log.d(TAG, "Got prompt from Flutter: sessionId=$sessionId, promptId=$promptId, interaction=$expectedInteraction")
+
+        // Show overlay with actual prompt (must be on main thread)
+        Handler(Looper.getMainLooper()).post {
+            overlayManager.showInterventionOverlay(
+                packageName = packageName,
+                promptText = promptText,
+                expectedInteraction = expectedInteraction,
+                minLockSeconds = minLockSeconds,
+                onResponse = { response ->
+                    // Capture response and report completion
+                    reportInterventionCompletion(
+                        success = true,
+                        outcome = "completed",
+                        responseContent = response
+                    )
+                },
+                onContinue = {
+                    // This is called after onResponse, so we don't need to do anything here
+                    // The response has already been captured
+                },
+                onDismiss = {
+                    // Intervention dismissed/skipped (no response)
+                    reportInterventionCompletion(
+                        success = false,
+                        outcome = "skipped",
+                        responseContent = ""
+                    )
+                }
+            )
+        }
+    }
+    
+    /**
+     * Report intervention completion to Flutter
+     */
+    private fun reportInterventionCompletion(
+        success: Boolean,
+        outcome: String,
+        responseContent: String = ""
+    ) {
+        val sessionId = currentSessionId
+        val promptDeliveryLogId = currentPromptDeliveryLogId
+        
+        if (sessionId == null || promptDeliveryLogId == null) {
+            Log.w(TAG, "Cannot report completion: missing sessionId or promptDeliveryLogId")
+            return
+        }
+
+        val secondsSpent = ((System.currentTimeMillis() - interventionStartTime) / 1000).toInt()
+        
+        val args = mapOf(
+            "sessionId" to sessionId,
+            "promptDeliveryLogId" to promptDeliveryLogId,
+            "success" to success,
+            "outcome" to outcome,
+            "secondsSpent" to secondsSpent,
+            "responseContent" to responseContent
+        )
+        
+        FlutterMethodChannelHelper.invokeMethod("reportInterventionCompleted", args)
+        
+        // Clear state
+        currentSessionId = null
+        currentPromptDeliveryLogId = null
+        interventionStartTime = 0
     }
 
     fun onAppNoLongerForeground() {
@@ -111,15 +221,15 @@ class InterventionManager(
         currentForegroundPackage = ""
     }
 
-    private fun scheduleRetrigger(minutes: Int, packageName: String, arm: String) {
+    private fun scheduleRetrigger(minutes: Int, packageName: String, level: Int) {
         cancelRetrigger()
         if (minutes <= 0) return
         retriggerHandle = scheduler.scheduleAtFixedRate({
             // Ensure the same app is still considered foreground by LaunchTrackingManager
             if (currentForegroundPackage == packageName) {
-                Handler(Looper.getMainLooper()).post {
-                    overlayManager.showInterventionOverlay(packageName = packageName, arm = arm) {}
-                }
+                // Recalculate severity for retrigger (may have changed) - runs on scheduler thread
+                val currentLevel = severityCalculator.calculateSeverityLevel(packageName)
+                triggerIntervention(packageName, currentLevel, "retrigger")
             }
         }, minutes.toLong(), minutes.toLong(), TimeUnit.MINUTES)
         Log.d(TAG, "Retrigger scheduled every $minutes minutes for $packageName")

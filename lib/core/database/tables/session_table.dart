@@ -25,5 +25,16 @@ class SessionTable extends Table {
   /// Timestamp when session was last updated
   DateTimeColumn get updatedAt =>
       dateTime().withDefault(Constant(DateTime.now()))();
+
+  /// The Android package name for the app this session is tracking
+  TextColumn get appPackage => text().withDefault(const Constant(""))();
+
+  /// Timestamp when session started (intervention began)
+  DateTimeColumn get startedAt =>
+      dateTime().withDefault(Constant(DateTime.now()))();
+
+  /// Timestamp when session ended (intervention completed), null if still active
+  DateTimeColumn get endedAt =>
+      dateTime().nullable().withDefault(const Constant(null))();
 }
 
